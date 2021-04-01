@@ -20,9 +20,9 @@ namespace Api.Models
         public virtual DbSet<Account> Accounts { get; set; }
         public virtual DbSet<CapacityProfile> CapacityProfiles { get; set; }
         public virtual DbSet<FormOfWork> FormOfWorks { get; set; }
-        public virtual DbSet<Freelancer> Freelancers { get; set; }
         public virtual DbSet<FreelancerService> FreelancerServices { get; set; }
         public virtual DbSet<FreelancerSkill> FreelancerSkills { get; set; }
+        public virtual DbSet<Image> Images { get; set; }
         public virtual DbSet<Job> Jobs { get; set; }
         public virtual DbSet<JobSkill> JobSkills { get; set; }
         public virtual DbSet<Level> Levels { get; set; }
@@ -56,6 +56,10 @@ namespace Api.Models
                 entity.ToTable("Account");
 
                 entity.Property(e => e.Id).HasColumnName("ID");
+
+                entity.Property(e => e.AvatarUrl)
+                    .IsRequired()
+                    .HasMaxLength(200);
 
                 entity.Property(e => e.Description).HasMaxLength(500);
 
@@ -129,9 +133,7 @@ namespace Api.Models
                     .IsRequired()
                     .HasMaxLength(500);
 
-                entity.Property(e => e.File).HasMaxLength(50);
-
-                entity.Property(e => e.Urlweb).HasMaxLength(30);
+                entity.Property(e => e.Urlweb).HasMaxLength(100);
 
                 entity.HasOne(d => d.Freelancer)
                     .WithMany(p => p.CapacityProfiles)
@@ -149,21 +151,6 @@ namespace Api.Models
                 entity.Property(e => e.Name)
                     .IsRequired()
                     .HasMaxLength(50);
-            });
-
-            modelBuilder.Entity<Freelancer>(entity =>
-            {
-                entity.HasKey(e => e.UserId);
-
-                entity.ToTable("Freelancer");
-
-                entity.Property(e => e.UserId)
-                    .ValueGeneratedNever()
-                    .HasColumnName("UserID");
-
-                entity.Property(e => e.FormOnWorkId).HasColumnName("FormOnWorkID");
-
-                entity.Property(e => e.LevelId).HasColumnName("LevelID");
             });
 
             modelBuilder.Entity<FreelancerService>(entity =>
@@ -210,6 +197,30 @@ namespace Api.Models
                     .HasForeignKey(d => d.SkilId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_FreelancerSkill_Skill");
+            });
+
+            modelBuilder.Entity<Image>(entity =>
+            {
+                entity.ToTable("Image");
+
+                entity.Property(e => e.Id).HasColumnName("ID");
+
+                entity.Property(e => e.CprofileName)
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnName("CProfileName");
+
+                entity.Property(e => e.FreeLancerId).HasColumnName("FreeLancerID");
+
+                entity.Property(e => e.Url)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.HasOne(d => d.CapacityProfile)
+                    .WithMany(p => p.Images)
+                    .HasForeignKey(d => new { d.FreeLancerId, d.CprofileName })
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Image_CapacityProfile");
             });
 
             modelBuilder.Entity<Job>(entity =>

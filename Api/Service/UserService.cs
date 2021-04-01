@@ -33,6 +33,7 @@ namespace Api.Service
             {
                 List<Claim> lstClaim = new List<Claim>(); //CLAIM USER INFO
                 lstClaim.Add(new Claim(ClaimTypes.Name, this.account.Username));
+                lstClaim.Add(new Claim(ClaimTypes.Role, this.account.RoleId.ToString()));
 
                 //CREATE JWT TOKEN
                 var tokenHandler = new JwtSecurityTokenHandler();
@@ -56,7 +57,8 @@ namespace Api.Service
         FreeLancerVNContext context = new FreeLancerVNContext();
         public IUserService.UserEntitis Auth(string username, string password)
         {
-            Account account = context.Accounts.SingleOrDefault(p => p.Username == username);
+            var list = context.Accounts.Include(p => p.Role).ToList();
+            Account account = list.SingleOrDefault(p => p.Username == username);
             if (account == null)
             {
                 throw new AppException("Username isn't exist");

@@ -36,6 +36,7 @@ namespace Api.Models
         public int? LevelId { get; set; }
         public bool? OnReady { get; set; }
         public int? FormOnWorkId { get; set; }
+        public string AvatarUrl { get; set; }
 
         public virtual FormOfWork FormOnWork { get; set; }
         public virtual Level Level { get; set; }
