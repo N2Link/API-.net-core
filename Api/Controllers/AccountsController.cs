@@ -29,21 +29,21 @@ namespace Api.Controllers
         [HttpGet("pagination")]
         public async Task<ActionResult> GetPagination(int page, int count)
         {
-            var list =  await  _context.Accounts.ToListAsync();
+            var list = await _context.Accounts.ToListAsync();
             if (count * page > list.Count)
             {
-                return Ok("Overpage") ;
+                return Ok("Overpage");
             }
             List<Account> accounts = new List<Account>();
-            for(int i = count*page; i<count*page+count; i++)
+            for (int i = count * page; i < count * page + count; i++)
             {
-                if (count * page + i > list.Count-1)
+                if (count * page + i > list.Count - 1)
                 {
                     break;
                 }
                 accounts.Add(list[i]);
             }
-            return Ok(accounts.Select(p => new {p.Id, p.LastName, p.Firstname, p.Level, p.OnReady, p.Ratings }).ToList());
+            return Ok(accounts.Select(p => new { p.Id, p.Name , p.Level, p.OnReady, p.Ratings }).ToList());
         }
 
         // GET: api/Accounts/5
@@ -78,11 +78,11 @@ namespace Api.Controllers
             var jsonToken = handler.ReadToken(stream);
             var tokenS = jsonToken as JwtSecurityToken;
             //I can get Claims using:
-            var username = tokenS.Claims.First(claim => claim.Type == "username").Value;
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             var role = Int32.Parse(tokenS.Claims.First(claim => claim.Type == "role").Value);
             if (role != 1)
             {
-                if (username != account.Username)
+                if (email != account.Email)
                 {
                     return BadRequest(ModelState);
                 }

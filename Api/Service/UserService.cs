@@ -27,12 +27,14 @@ namespace Api.Service
 
             public UserEntitis(Account account)
             {
+                account.PasswordHash = null;
+                account.PasswordSalt = null;
                 this.account = account;
             }
             public UserEntitis createUserToken()
             {
                 List<Claim> lstClaim = new List<Claim>(); //CLAIM USER INFO
-                lstClaim.Add(new Claim(ClaimTypes.Name, this.account.Username));
+                lstClaim.Add(new Claim(ClaimTypes.Email, this.account.Email));
                 lstClaim.Add(new Claim(ClaimTypes.Role, this.account.RoleId.ToString()));
 
                 //CREATE JWT TOKEN
@@ -51,14 +53,15 @@ namespace Api.Service
                 return this;
             }
         }
+
     }
     public class UserService : IUserService
     {
         FreeLancerVNContext context = new FreeLancerVNContext();
-        public IUserService.UserEntitis Auth(string username, string password)
+        public IUserService.UserEntitis Auth(string email, string password)
         {
             var list = context.Accounts.Include(p => p.Role).ToList();
-            Account account = list.SingleOrDefault(p => p.Username == username);
+            Account account = list.SingleOrDefault(p => p.Email == email );
             if (account == null)
             {
                 throw new AppException("Username doesn't exist");
@@ -72,13 +75,13 @@ namespace Api.Service
 
         public IUserService.UserEntitis Create(Account account, string password)
         {
-            var acc = context.Accounts.SingleOrDefault(p => p.Username == account.Username);
-            if(acc != null)
+            var acc = context.Accounts.SingleOrDefault(p => p.Email == account.Email);
+            if (acc != null)
             {
                 throw new AppException("Username is exist");
             }
             byte[] passwordHash, passwordSalt;
-            CreatePasswordHash(password, out passwordHash,out passwordSalt);
+            CreatePasswordHash(password, out passwordHash, out passwordSalt);
             account.PasswordHash = passwordHash;
             account.PasswordSalt = passwordSalt;
             account.Balance = 0;

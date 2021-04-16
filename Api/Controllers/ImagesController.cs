@@ -27,7 +27,7 @@ namespace Api.Controllers
 
             if (System.IO.File.Exists(imageModel.Url))
             {
-                if(imageModel.Name != _webHostEnvironment.WebRootPath + "\\Avatars\\default.jpg")
+                if (imageModel.Name != _webHostEnvironment.WebRootPath + "\\Avatars\\default.jpg")
                 {
                     System.IO.File.Delete(imageModel.Url);
                 }
@@ -40,7 +40,7 @@ namespace Api.Controllers
             return newURL;
         }
         [HttpPost("Images")]
-        public List<String> PostImageCProfile([FromBody]List<ImageModel> image  )
+        public List<String> PostImageCProfile([FromBody] List<ImageModel> image)
         {
             return new List<string>();
         }

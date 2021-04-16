@@ -28,8 +28,9 @@ namespace Api.Controllers
         {
             try
             {
-                return Ok(userService.Auth(model.Username, model.Password));
-            }catch(AppException ex)
+                return Ok(userService.Auth(model.Email, model.Password));
+            }
+            catch (AppException ex)
             {
                 return BadRequest(new { message = ex.Message });
             }

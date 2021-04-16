@@ -34,14 +34,25 @@ namespace Api.Controllers
             List<Job> accounts = new List<Job>();
             for (int i = count * page; i < count * page + count; i++)
             {
-                if (count * page+i > list.Count-1)
+                if (count * page + i > list.Count - 1)
                 {
                     break;
                 }
                 accounts.Add(list[i]);
             }
-            return Ok(accounts.Select(p => new {p.Id, p.Name, p.Deadline, p.Details,
-                p.Renter, p.JobSkills, p.Service, p.Floorprice, p.Cellingprice, p.Payform}).ToList());
+            return Ok(accounts.Select(p => new
+            {
+                p.Id,
+                p.Name,
+                p.Deadline,
+                p.Details,
+                p.Renter,
+                p.JobSkills,
+                p.Service,
+                p.Floorprice,
+                p.Cellingprice,
+                p.Payform
+            }).ToList());
         }
 
         // GET: api/Jobs
@@ -89,9 +100,9 @@ namespace Api.Controllers
             var jsonToken = handler.ReadToken(stream);
             var tokenS = jsonToken as JwtSecurityToken;
             //I can get Claims using:
-            var username = tokenS.Claims.First(claim => claim.Type == "username").Value;
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             var role = Int32.Parse(tokenS.Claims.First(claim => claim.Type == "role").Value);
-            if (username != renter.Username || role != 2)
+            if (email != renter.Email || role != 2)
             {
                 return BadRequest();
             }
@@ -124,7 +135,7 @@ namespace Api.Controllers
         public async Task<ActionResult<Job>> PostJob(Job job)
         {
             var renter = _context.Accounts.Find(job.RenterId);
-            if ( renter == null)
+            if (renter == null)
             {
                 return BadRequest();
             }
@@ -136,9 +147,9 @@ namespace Api.Controllers
             var jsonToken = handler.ReadToken(stream);
             var tokenS = jsonToken as JwtSecurityToken;
             //I can get Claims using:
-            var username = tokenS.Claims.First(claim => claim.Type == "username").Value;
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             var role = Int32.Parse(tokenS.Claims.First(claim => claim.Type == "role").Value);
-            if (username != renter.Username||role!=2)
+            if (email != renter.Email || role != 2)
             {
                 return BadRequest();
             }

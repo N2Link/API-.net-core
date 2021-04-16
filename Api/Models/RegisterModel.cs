@@ -7,13 +7,10 @@ namespace Api.Models
 {
     public class RegisterModel
     {
-        public String Username { get; set; }
-        public String Password { get; set; }
-        public String FirstName { get; set; }
-        public String LastName { get; set; }
-        public String Phone { get; set; }
-        public String Email { get; set; }
+        public string Name { get; set; }
+        public string Phone { get; set; }
+        public string Email { get; set; }
         public int RoleID { get; set; }
-
+        public string Password { get; set; }
     }
 }

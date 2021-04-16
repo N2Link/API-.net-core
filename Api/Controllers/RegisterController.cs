@@ -29,9 +29,7 @@ namespace Api.Controllers
         public IActionResult Register([FromBody] RegisterModel model)
         {
             Account account = new Account();
-            account.Username = model.Username;
-            account.Firstname = model.FirstName;
-            account.LastName = model.LastName;
+            account.Name = model.Name;
             account.Phone = model.Phone;
             account.Email = model.Email;
             account.RoleId = model.RoleID;

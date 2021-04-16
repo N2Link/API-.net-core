@@ -38,14 +38,14 @@ namespace Api.Controllers
             var jsonToken = handler.ReadToken(stream);
             var tokenS = jsonToken as JwtSecurityToken;
             //I can get Claims using:
-            var username = tokenS.Claims.First(claim => claim.Type == "username").Value;
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             var role = Int32.Parse(tokenS.Claims.First(claim => claim.Type == "role").Value);
-            if (account.Username != username || role != 2)
+            if (account.Email != email || role != 2)
             {
                 return BadRequest();
             }
             return account.OfferHistories.ToList();
-        }    
+        }
 
         [HttpGet("job/{jobid}")]
         public ActionResult<List<OfferHistory>> GetJobOfferHistories(int jobid)
@@ -65,10 +65,10 @@ namespace Api.Controllers
             var jsonToken = handler.ReadToken(stream);
             var tokenS = jsonToken as JwtSecurityToken;
             //I can get Claims using:
-            var username = tokenS.Claims.First(claim => claim.Type == "username").Value;
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             var role = Int32.Parse(tokenS.Claims.First(claim => claim.Type == "role").Value);
 
-            if (account.Username != username || role != 3)
+            if (account.Email != email || role != 3)
             {
                 return BadRequest();
             }
@@ -114,9 +114,9 @@ namespace Api.Controllers
             var jsonToken = handler.ReadToken(stream);
             var tokenS = jsonToken as JwtSecurityToken;
             //I can get Claims using:
-            var username = tokenS.Claims.First(claim => claim.Type == "username").Value;
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             var role = Int32.Parse(tokenS.Claims.First(claim => claim.Type == "role").Value);
-            if (account.Username != username || role != 3)
+            if (account.Email != email || role != 3)
             {
                 return BadRequest();
             }
@@ -136,7 +136,7 @@ namespace Api.Controllers
                     throw;
                 }
             }//add todo list to database
-            if(offerHistory.Status == "Done")
+            if (offerHistory.Status == "Done")
             {
                 var listOffersRejected = _context.OfferHistories
                     .Where(p => p.JobId == id && p.FreelancerId != offerHistory.FreelancerId).ToList();
@@ -163,14 +163,14 @@ namespace Api.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPost]
-        public async Task<ActionResult<OfferHistory>> PostOfferHistory(OfferHistory offerHistory)
+        public async Task<ActionResult<OfferHistory>> PostOfferHistory([FromBody] OfferHistoryPost offerHistoryPost)
         {
-            if (_context.Jobs.Find(offerHistory.JobId)==null)
+            if (_context.Jobs.Find(offerHistoryPost.JobId) == null)
             {
                 return BadRequest();
             }
-            var freelancer = _context.Accounts.Find(offerHistory.FreelancerId);
-            if(freelancer == null)
+            var freelancer = _context.Accounts.Find(offerHistoryPost.FreelancerId);
+            if (freelancer == null)
             {
                 return BadRequest();
             }
@@ -183,17 +183,26 @@ namespace Api.Controllers
             var jsonToken = handler.ReadToken(stream);
             var tokenS = jsonToken as JwtSecurityToken;
             //I can get Claims using:
-            var username = tokenS.Claims.First(claim => claim.Type == "username").Value;
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             var role = Int32.Parse(tokenS.Claims.First(claim => claim.Type == "role").Value);
-            if(username!=freelancer.Username || role != 2)
+            if (email != freelancer.Email || role != 2)
             {
                 return BadRequest();
             }
-            if(_context.OfferHistories
-                .Where(p=>p.FreelancerId==freelancer.Id && offerHistory.JobId == p.JobId).Count() >= 3)
+            if (_context.OfferHistories
+                .Where(p => p.FreelancerId == freelancer.Id && offerHistoryPost.JobId == p.JobId).Count() >= 3)
             {
                 return Ok("Oops... You have only three times to offer this job.");
             }
+            var offerHistory = new OfferHistory()
+            {
+                JobId = offerHistoryPost.JobId,
+                FreelancerId = offerHistoryPost.FreelancerId,
+                Description = offerHistoryPost.Description,
+                ExpectedDay = offerHistoryPost.ExpectedDay,
+                OfferPrice = offerHistoryPost.OfferPrice,
+                Status = "Waiting"
+            };
             _context.OfferHistories.Add(offerHistory);
             try
             {

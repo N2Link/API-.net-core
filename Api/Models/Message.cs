@@ -12,6 +12,7 @@ namespace Api.Models
         public int SenderId { get; set; }
         public int ReceiveId { get; set; }
         public string Message1 { get; set; }
+        public string Status { get; set; }
 
         public virtual Job Job { get; set; }
     }

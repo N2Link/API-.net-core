@@ -65,19 +65,15 @@ namespace Api.Models
 
                 entity.Property(e => e.Email)
                     .IsRequired()
-                    .HasMaxLength(50);
-
-                entity.Property(e => e.Firstname)
-                    .IsRequired()
-                    .HasMaxLength(50);
+                    .HasMaxLength(100);
 
                 entity.Property(e => e.FormOnWorkId).HasColumnName("FormOnWorkID");
 
-                entity.Property(e => e.LastName)
-                    .IsRequired()
-                    .HasMaxLength(50);
-
                 entity.Property(e => e.LevelId).HasColumnName("LevelID");
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(100);
 
                 entity.Property(e => e.PasswordHash)
                     .IsRequired()
@@ -94,10 +90,6 @@ namespace Api.Models
                 entity.Property(e => e.RoleId).HasColumnName("RoleID");
 
                 entity.Property(e => e.Tile).HasMaxLength(50);
-
-                entity.Property(e => e.Username)
-                    .IsRequired()
-                    .HasMaxLength(32);
 
                 entity.Property(e => e.Website).HasMaxLength(30);
 
@@ -356,6 +348,10 @@ namespace Api.Models
 
                 entity.Property(e => e.SenderId).HasColumnName("SenderID");
 
+                entity.Property(e => e.Status)
+                    .IsRequired()
+                    .HasMaxLength(20);
+
                 entity.HasOne(d => d.Job)
                     .WithMany(p => p.Messages)
                     .HasForeignKey(d => d.JobId)
@@ -376,8 +372,6 @@ namespace Api.Models
                 entity.Property(e => e.Description)
                     .IsRequired()
                     .HasMaxLength(500);
-
-                entity.Property(e => e.ExpectedTimeId).HasColumnName("ExpectedTimeID");
 
                 entity.Property(e => e.Status)
                     .IsRequired()
