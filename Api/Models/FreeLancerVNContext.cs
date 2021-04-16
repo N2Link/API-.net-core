@@ -405,15 +405,15 @@ namespace Api.Models
 
             modelBuilder.Entity<ProfileService>(entity =>
             {
-                entity.HasKey(e => new { e.FreelancerId, e.Name, e.ServiceId });
+                entity.HasKey(e => new { e.FreelancerId, e.ServiceId, e.Name });
 
                 entity.ToTable("ProfileService");
 
                 entity.Property(e => e.FreelancerId).HasColumnName("FreelancerID");
 
-                entity.Property(e => e.Name).HasMaxLength(200);
-
                 entity.Property(e => e.ServiceId).HasColumnName("ServiceID");
+
+                entity.Property(e => e.Name).HasMaxLength(200);
 
                 entity.HasOne(d => d.Service)
                     .WithMany(p => p.ProfileServices)

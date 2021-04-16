@@ -185,7 +185,7 @@ namespace Api.Controllers
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             var role = Int32.Parse(tokenS.Claims.First(claim => claim.Type == "role").Value);
-            if (email != freelancer.Email || role != 2)
+            if (email != freelancer.Email || role != 2 || freelancer.IsAccuracy == false)
             {
                 return BadRequest();
             }
