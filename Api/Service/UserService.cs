@@ -61,18 +61,13 @@ namespace Api.Service
             Account account = list.SingleOrDefault(p => p.Username == username);
             if (account == null)
             {
-                throw new AppException("Username isn't exist");
+                throw new AppException("Username doesn't exist");
             }
             if (!VerifyPasswordHash(password, account.PasswordHash, account.PasswordSalt))
                 throw new AppException("Password not correct");
             IUserService.UserEntitis userEntitis = new IUserService.UserEntitis(account);
             userEntitis.createUserToken();
             return userEntitis;
-        }
-
-        private Exception AppException()
-        {
-            throw new NotImplementedException();
         }
 
         public IUserService.UserEntitis Create(Account account, string password)

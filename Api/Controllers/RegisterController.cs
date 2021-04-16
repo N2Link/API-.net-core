@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Api.Models;
 using Api.Service;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.Helpers;
@@ -17,9 +18,11 @@ namespace Api.Controllers
     public class RegisterController : ControllerBase
     {
         IUserService userService;
-        public RegisterController()
+        IWebHostEnvironment _webHostEnvironment;
+        public RegisterController(IWebHostEnvironment webHostEnvironment)
         {
             userService = new UserService();
+            _webHostEnvironment = webHostEnvironment;
         }
         [AllowAnonymous]
         [HttpPost]
@@ -32,6 +35,8 @@ namespace Api.Controllers
             account.Phone = model.Phone;
             account.Email = model.Email;
             account.RoleId = model.RoleID;
+            string path = _webHostEnvironment.WebRootPath + "\\Avatars\\default.jpg";
+            account.AvatarUrl = path;
 
             try
             {

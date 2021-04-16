@@ -6,18 +6,15 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Api.Models;
-using Microsoft.AspNetCore.Authorization;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Api.Controllers
 {
-
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class AccountsController : ControllerBase
     {
         private readonly FreeLancerVNContext _context;
-
         public AccountsController(FreeLancerVNContext context)
         {
             _context = context;
@@ -28,6 +25,25 @@ namespace Api.Controllers
         public async Task<ActionResult<IEnumerable<Account>>> GetAccounts()
         {
             return await _context.Accounts.ToListAsync();
+        }
+        [HttpGet("pagination")]
+        public async Task<ActionResult> GetPagination(int page, int count)
+        {
+            var list =  await  _context.Accounts.ToListAsync();
+            if (count * page > list.Count)
+            {
+                return Ok("Overpage") ;
+            }
+            List<Account> accounts = new List<Account>();
+            for(int i = count*page; i<count*page+count; i++)
+            {
+                if (count * page + i > list.Count-1)
+                {
+                    break;
+                }
+                accounts.Add(list[i]);
+            }
+            return Ok(accounts.Select(p => new {p.Id, p.LastName, p.Firstname, p.Level, p.OnReady, p.Ratings }).ToList());
         }
 
         // GET: api/Accounts/5
@@ -54,9 +70,25 @@ namespace Api.Controllers
             {
                 return BadRequest();
             }
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var username = tokenS.Claims.First(claim => claim.Type == "username").Value;
+            var role = Int32.Parse(tokenS.Claims.First(claim => claim.Type == "role").Value);
+            if (role != 1)
+            {
+                if (username != account.Username)
+                {
+                    return BadRequest(ModelState);
+                }
+            }
 
             _context.Entry(account).State = EntityState.Modified;
-
             try
             {
                 await _context.SaveChangesAsync();
