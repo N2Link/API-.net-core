@@ -14,7 +14,7 @@ namespace Api.Service
 {
     public interface IUserService
     {
-        UserEntitis Auth(string username, string password);
+        UserEntitis Auth(string email, string password);
         IEnumerable<Account> GetAll();
         Account GetByID(int id);
         UserEntitis Create(Account account, String password);
