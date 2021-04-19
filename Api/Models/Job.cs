@@ -36,8 +36,7 @@ namespace Api.Models
         public virtual Rating IdNavigation { get; set; }
         public virtual Payform Payform { get; set; }
         public virtual Account Renter { get; set; }
-        public virtual Service Service { get; set; }
-        public virtual Specialty Specialty { get; set; }
+        public virtual SpecialtyService S { get; set; }
         public virtual TypeOfWork Type { get; set; }
         public virtual ICollection<JobSkill> JobSkills { get; set; }
         public virtual ICollection<Message> Messages { get; set; }

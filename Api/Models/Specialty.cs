@@ -9,14 +9,12 @@ namespace Api.Models
     {
         public Specialty()
         {
-            Jobs = new HashSet<Job>();
-            Services = new HashSet<Service>();
+            SpecialtyServices = new HashSet<SpecialtyService>();
         }
 
         public int Id { get; set; }
         public string Name { get; set; }
 
-        public virtual ICollection<Job> Jobs { get; set; }
-        public virtual ICollection<Service> Services { get; set; }
+        public virtual ICollection<SpecialtyService> SpecialtyServices { get; set; }
     }
 }

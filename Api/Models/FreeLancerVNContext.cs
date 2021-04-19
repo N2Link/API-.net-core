@@ -35,6 +35,7 @@ namespace Api.Models
         public virtual DbSet<Service> Services { get; set; }
         public virtual DbSet<Skill> Skills { get; set; }
         public virtual DbSet<Specialty> Specialties { get; set; }
+        public virtual DbSet<SpecialtyService> SpecialtyServices { get; set; }
         public virtual DbSet<Todolist> Todolists { get; set; }
         public virtual DbSet<TypeOfWork> TypeOfWorks { get; set; }
 
@@ -278,23 +279,17 @@ namespace Api.Models
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Job_User");
 
-                entity.HasOne(d => d.Service)
-                    .WithMany(p => p.Jobs)
-                    .HasForeignKey(d => d.ServiceId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Job_Service");
-
-                entity.HasOne(d => d.Specialty)
-                    .WithMany(p => p.Jobs)
-                    .HasForeignKey(d => d.SpecialtyId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Job_Specialty");
-
                 entity.HasOne(d => d.Type)
                     .WithMany(p => p.Jobs)
                     .HasForeignKey(d => d.TypeId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Job_TypeOfWork");
+
+                entity.HasOne(d => d.S)
+                    .WithMany(p => p.Jobs)
+                    .HasForeignKey(d => new { d.SpecialtyId, d.ServiceId })
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Job_SpecialtyService");
             });
 
             modelBuilder.Entity<JobSkill>(entity =>
@@ -466,13 +461,6 @@ namespace Api.Models
                 entity.Property(e => e.Name)
                     .IsRequired()
                     .HasMaxLength(50);
-
-                entity.Property(e => e.SpecialtyId).HasColumnName("SpecialtyID");
-
-                entity.HasOne(d => d.Specialty)
-                    .WithMany(p => p.Services)
-                    .HasForeignKey(d => d.SpecialtyId)
-                    .HasConstraintName("FK_Service_Specialty");
             });
 
             modelBuilder.Entity<Skill>(entity =>
@@ -495,6 +483,29 @@ namespace Api.Models
                 entity.Property(e => e.Name)
                     .IsRequired()
                     .HasMaxLength(50);
+            });
+
+            modelBuilder.Entity<SpecialtyService>(entity =>
+            {
+                entity.HasKey(e => new { e.SpecialtyId, e.ServiceId });
+
+                entity.ToTable("SpecialtyService");
+
+                entity.Property(e => e.SpecialtyId).HasColumnName("SpecialtyID");
+
+                entity.Property(e => e.ServiceId).HasColumnName("ServiceID");
+
+                entity.HasOne(d => d.Service)
+                    .WithMany(p => p.SpecialtyServices)
+                    .HasForeignKey(d => d.ServiceId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_SpecialtyService_Service");
+
+                entity.HasOne(d => d.Specialty)
+                    .WithMany(p => p.SpecialtyServices)
+                    .HasForeignKey(d => d.SpecialtyId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_SpecialtyService_Specialty");
             });
 
             modelBuilder.Entity<Todolist>(entity =>

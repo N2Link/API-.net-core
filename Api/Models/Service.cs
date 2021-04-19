@@ -10,17 +10,15 @@ namespace Api.Models
         public Service()
         {
             FreelancerServices = new HashSet<FreelancerService>();
-            Jobs = new HashSet<Job>();
             ProfileServices = new HashSet<ProfileService>();
+            SpecialtyServices = new HashSet<SpecialtyService>();
         }
 
         public int Id { get; set; }
         public string Name { get; set; }
-        public int? SpecialtyId { get; set; }
 
-        public virtual Specialty Specialty { get; set; }
         public virtual ICollection<FreelancerService> FreelancerServices { get; set; }
-        public virtual ICollection<Job> Jobs { get; set; }
         public virtual ICollection<ProfileService> ProfileServices { get; set; }
+        public virtual ICollection<SpecialtyService> SpecialtyServices { get; set; }
     }
 }

@@ -48,7 +48,8 @@ namespace Api.Controllers
                 p.Details,
                 p.Renter,
                 p.JobSkills,
-                p.Service,
+                p.S.Service,
+                p.S.Specialty,
                 p.Floorprice,
                 p.Cellingprice,
                 p.Payform
