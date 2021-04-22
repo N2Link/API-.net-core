@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Api.Models;
+using Api.Unities;
 using Microsoft.AspNetCore.Authorization;
 
 namespace Api.Controllers
@@ -24,23 +25,38 @@ namespace Api.Controllers
 
         // GET: api/SpecialtyServices
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<SpecialtyService>>> GetSpecialtyServices()
+        public async Task<ActionResult<IEnumerable<SS>>> GetSpecialtyServices()
         {
-            return await _context.SpecialtyServices.Include(p => p.Service).Include(p=>p.Specialty).ToListAsync();
+            return await _context.SpecialtyServices.Include(p=>p.Service).Include(p=>p.Specialty).
+                Select(p=> new SS 
+                {
+                    ServiceID = p.ServiceId,
+                    SpecialtyID = p.SpecialtyId,
+                    ServiceName = p.Service.Name,
+                    SpecialtyName = p.Specialty.Name,
+                }).ToListAsync();
         }
 
         // GET: api/SpecialtyServices/5
         [HttpGet("getone")]
-        public async Task<ActionResult<SpecialtyService>> GetSpecialtyService(int serviceID, int specialtyID)
+        public async Task<ActionResult<SS>> GetSpecialtyService(int serviceID, int specialtyID)
         {
-            var specialtyService = await _context.SpecialtyServices.SingleOrDefaultAsync(p=>p.ServiceId==serviceID&&p.SpecialtyId==specialtyID);
+            var specialtyService = await _context.SpecialtyServices.Include(p=>p.Service)
+                .Include(p=>p.Specialty)
+                .SingleOrDefaultAsync(p=>p.ServiceId==serviceID&&p.SpecialtyId==specialtyID);
 
             if (specialtyService == null)
             {
                 return NotFound();
             }
-
-            return specialtyService;
+            var ss = new SS()
+            {
+                ServiceID = specialtyService.ServiceId,
+                SpecialtyID = specialtyService.SpecialtyId,
+                ServiceName = specialtyService.Service.Name,
+                SpecialtyName = specialtyService.Specialty.Name,
+            };
+            return ss;
         }
 
         // PUT: api/SpecialtyServices/5

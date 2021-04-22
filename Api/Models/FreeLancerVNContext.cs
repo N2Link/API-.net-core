@@ -285,7 +285,7 @@ namespace Api.Models
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Job_TypeOfWork");
 
-                entity.HasOne(d => d.S)
+                entity.HasOne(d => d.SpecialtyService)
                     .WithMany(p => p.Jobs)
                     .HasForeignKey(d => new { d.SpecialtyId, d.ServiceId })
                     .OnDelete(DeleteBehavior.ClientSetNull)

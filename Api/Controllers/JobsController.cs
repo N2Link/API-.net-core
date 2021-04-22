@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Api.Models;
+using Api.Unities;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
 
@@ -24,35 +25,39 @@ namespace Api.Controllers
         }
 
         [HttpGet("pagination")]
-        public async Task<ActionResult<IEnumerable<Account>>> GetPagination(int page, int count)
+        public async Task<ActionResult<IEnumerable<JobResponseModel>>> GetPagination(int page, int count)
         {
-            var list = await _context.Jobs.ToListAsync();
+            var list = await _context.Jobs.Include(p=>p.Renter)
+                .Include(p=>p.SpecialtyService).ThenInclude(p=>p.Service)
+                .Include(p=>p.SpecialtyService).ThenInclude(p=>p.Specialty)
+                .Include(p=>p.Payform).Include(p=>p.JobSkills)
+                .ToListAsync();
+
             if (count * page > list.Count)
             {
                 return Ok("Overpage");
             }
-            List<Job> accounts = new List<Job>();
+            List<Job> jobs = new List<Job>();
             for (int i = count * page; i < count * page + count; i++)
             {
                 if (count * page + i > list.Count - 1)
                 {
                     break;
                 }
-                accounts.Add(list[i]);
+                jobs.Add(list[i]);
             }
-            return Ok(accounts.Select(p => new
+            return Ok(jobs.Select(p => new JobResponseModel()
             {
-                p.Id,
-                p.Name,
-                p.Deadline,
-                p.Details,
-                p.Renter,
-                p.JobSkills,
-                p.S.Service,
-                p.S.Specialty,
-                p.Floorprice,
-                p.Cellingprice,
-                p.Payform
+                Id = p.Id,
+                Name = p.Name,
+                Renter = p.Renter,
+                Deadline = p.Deadline,
+                SS = new SS(p.SpecialtyService),
+                Cellingprice = p.Cellingprice,
+                Details = p.Details,
+                Floorprice = p.Floorprice,
+                Payform = p.Payform,
+                JobSkills = p.JobSkills,
             }).ToList());
         }
 
@@ -65,7 +70,7 @@ namespace Api.Controllers
 
         // GET: api/Jobs/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Job>> GetJob(int id)
+        public async Task<ActionResult<JobResponseModel>> GetJob(int id)
         {
             var job = await _context.Jobs.FindAsync(id);
 
@@ -73,8 +78,20 @@ namespace Api.Controllers
             {
                 return NotFound();
             }
-
-            return job;
+            var jobresponse = new JobResponseModel()
+            {
+                Id = job.Id,
+                Name = job.Name,
+                Renter = job.Renter,
+                Deadline = job.Deadline,
+                SS = new SS(job.SpecialtyService),
+                Cellingprice = job.Cellingprice,
+                Details = job.Details,
+                Floorprice = job.Floorprice,
+                Payform = job.Payform,
+                JobSkills = job.JobSkills,
+            };
+            return jobresponse;
         }
 
         // PUT: api/Jobs/5
@@ -154,7 +171,6 @@ namespace Api.Controllers
             {
                 return BadRequest();
             }
-
             _context.Jobs.Add(job);
             await _context.SaveChangesAsync();
 

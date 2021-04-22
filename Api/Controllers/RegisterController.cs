@@ -21,8 +21,8 @@ namespace Api.Controllers
         IWebHostEnvironment _webHostEnvironment;
         public RegisterController(IWebHostEnvironment webHostEnvironment)
         {
-            userService = new UserService();
             _webHostEnvironment = webHostEnvironment;
+            userService = new UserService();
         }
         [AllowAnonymous]
         [HttpPost]
@@ -33,9 +33,8 @@ namespace Api.Controllers
             account.Phone = model.Phone;
             account.Email = model.Email;
             account.RoleId = model.RoleID;
-            string path = _webHostEnvironment.WebRootPath + "\\Avatars\\default.jpg";
-            account.AvatarUrl = path;
-
+            //string path = _webHostEnvironment.WebRootPath + "\\Avatars\\default.jpg";
+            account.AvatarUrl = "default.jpg";
             try
             {
                 IUserService.UserEntitis userEntitis =
