@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Api.Enities;
 using Api.Models;
 using Api.Service;
 using Microsoft.AspNetCore.Authorization;
@@ -12,7 +13,7 @@ using WebApi.Helpers;
 namespace Api.Controllers
 {
     [Authorize]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     [ApiController]
     public class LoginController : ControllerBase
     {

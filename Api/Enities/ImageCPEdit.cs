@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Api.Models
+namespace Api.Enities
 {
-    public class ImageModel
+    public class ImageCPEdit
     {
-        public String Name { get; set; }
-        public String Url { get; set; }
+        public  int CPID { get; set; }
+        public string ImageName { get; set; }
         public string ImageBase64 { get; set; }
     }
 }

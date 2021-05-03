@@ -13,48 +13,48 @@ namespace Api.Controllers
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    public class SpecialtiesController : ControllerBase
+    public class PayformsController : ControllerBase
     {
         private readonly FreeLancerVNContext _context;
 
-        public SpecialtiesController(FreeLancerVNContext context)
+        public PayformsController(FreeLancerVNContext context)
         {
             _context = context;
         }
 
-        // GET: api/Specialties
+        // GET: api/Payforms
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Specialty>>> GetSpecialties()
+        public async Task<ActionResult<IEnumerable<Payform>>> GetPayforms()
         {
-            return await _context.Specialties.ToListAsync();
+            return await _context.Payforms.ToListAsync();
         }
 
-        // GET: api/Specialties/5
+        // GET: api/Payforms/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Specialty>> GetSpecialty(int id)
+        public async Task<ActionResult<Payform>> GetPayform(int id)
         {
-            var specialty = await _context.Specialties.FindAsync(id);
+            var payform = await _context.Payforms.FindAsync(id);
 
-            if (specialty == null)
+            if (payform == null)
             {
                 return NotFound();
             }
 
-            return specialty;
+            return payform;
         }
 
-        // PUT: api/Specialties/5
+        // PUT: api/Payforms/5
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutSpecialty(int id, Specialty specialty)
+        public async Task<IActionResult> PutPayform(int id, Payform payform)
         {
-            if (id != specialty.Id)
+            if (id != payform.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(specialty).State = EntityState.Modified;
+            _context.Entry(payform).State = EntityState.Modified;
 
             try
             {
@@ -62,7 +62,7 @@ namespace Api.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!SpecialtyExists(id))
+                if (!PayformExists(id))
                 {
                     return NotFound();
                 }
@@ -75,37 +75,37 @@ namespace Api.Controllers
             return NoContent();
         }
 
-        // POST: api/Specialties
+        // POST: api/Payforms
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPost]
-        public async Task<ActionResult<Specialty>> PostSpecialty(Specialty specialty)
+        public async Task<ActionResult<Payform>> PostPayform(Payform payform)
         {
-            _context.Specialties.Add(specialty);
+            _context.Payforms.Add(payform);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetSpecialty", new { id = specialty.Id }, specialty);
+            return CreatedAtAction("GetPayform", new { id = payform.Id }, payform);
         }
 
-        // DELETE: api/Specialties/5
+        // DELETE: api/Payforms/5
         [HttpDelete("{id}")]
-        public async Task<ActionResult<Specialty>> DeleteSpecialty(int id)
+        public async Task<ActionResult<Payform>> DeletePayform(int id)
         {
-            var specialty = await _context.Specialties.FindAsync(id);
-            if (specialty == null)
+            var payform = await _context.Payforms.FindAsync(id);
+            if (payform == null)
             {
                 return NotFound();
             }
 
-            _context.Specialties.Remove(specialty);
+            _context.Payforms.Remove(payform);
             await _context.SaveChangesAsync();
 
-            return specialty;
+            return payform;
         }
 
-        private bool SpecialtyExists(int id)
+        private bool PayformExists(int id)
         {
-            return _context.Specialties.Any(e => e.Id == id);
+            return _context.Payforms.Any(e => e.Id == id);
         }
     }
 }

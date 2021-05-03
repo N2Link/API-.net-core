@@ -6,9 +6,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Api.Models;
-using Api.Unities;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
+using Api.Enities;
+using Api.Service;
 
 namespace Api.Controllers
 {
@@ -28,8 +29,8 @@ namespace Api.Controllers
         public async Task<ActionResult<IEnumerable<JobResponseModel>>> GetPagination(int page, int count)
         {
             var list = await _context.Jobs.Include(p=>p.Renter)
-                .Include(p=>p.SpecialtyService).ThenInclude(p=>p.Service)
-                .Include(p=>p.SpecialtyService).ThenInclude(p=>p.Specialty)
+                .Include(p=>p.S).ThenInclude(p=>p.Service)
+                .Include(p=>p.S).ThenInclude(p=>p.Specialty)
                 .Include(p=>p.Payform).Include(p=>p.JobSkills)
                 .ToListAsync();
 
@@ -50,9 +51,10 @@ namespace Api.Controllers
             {
                 Id = p.Id,
                 Name = p.Name,
-                Renter = p.Renter,
+                Renter = new IUserService.UserEntitis(p.Renter),
+                Freelancer = p.Freelancer != null ? new IUserService.UserEntitis(p.Freelancer):null,
                 Deadline = p.Deadline,
-                SS = new SS(p.SpecialtyService),
+                SS = new SS(p.S),
                 Cellingprice = p.Cellingprice,
                 Details = p.Details,
                 Floorprice = p.Floorprice,
@@ -82,9 +84,10 @@ namespace Api.Controllers
             {
                 Id = job.Id,
                 Name = job.Name,
-                Renter = job.Renter,
+                Renter = new IUserService.UserEntitis(job.Renter),
+                Freelancer = job.Freelancer != null ? new IUserService.UserEntitis(job.Freelancer) : null,
                 Deadline = job.Deadline,
-                SS = new SS(job.SpecialtyService),
+                SS = new SS(job.S),
                 Cellingprice = job.Cellingprice,
                 Details = job.Details,
                 Floorprice = job.Floorprice,
@@ -119,8 +122,7 @@ namespace Api.Controllers
             var tokenS = jsonToken as JwtSecurityToken;
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
-            var role = Int32.Parse(tokenS.Claims.First(claim => claim.Type == "role").Value);
-            if (email != renter.Email || role != 2)
+            if (email != renter.Email)
             {
                 return BadRequest();
             }
@@ -150,13 +152,8 @@ namespace Api.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPost]
-        public async Task<ActionResult<Job>> PostJob(Job job)
+        public async Task<ActionResult<JobPostModel>> PostJob(JobPostModel jobPostModel)
         {
-            var renter = _context.Accounts.Find(job.RenterId);
-            if (renter == null)
-            {
-                return BadRequest();
-            }
             String jwt = Request.Headers["Authorization"];
             jwt = jwt.Substring(7);
             //Decode jwt and get payload
@@ -166,14 +163,32 @@ namespace Api.Controllers
             var tokenS = jsonToken as JwtSecurityToken;
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
-            var role = Int32.Parse(tokenS.Claims.First(claim => claim.Type == "role").Value);
-            if (email != renter.Email || role != 2)
+
+            var renter = await _context.Accounts
+                .SingleOrDefaultAsync(p=>p.Email == email && p.RoleId==3);
+            if(renter == null)
             {
                 return BadRequest();
             }
-            _context.Jobs.Add(job);
-            await _context.SaveChangesAsync();
+            var job = new Job()
+            {
+                Name = jobPostModel.Name,
+                RenterId = renter.Id,
+                Details = jobPostModel.Details,
+                TypeId = jobPostModel.TypeId,
+                FormId = jobPostModel.FormId,
+                WorkatId = jobPostModel.WorkatId,
+                PayformId = jobPostModel.PayformId,
+                Deadline = jobPostModel.Deadline,
+                Floorprice = jobPostModel.Floorprice,
+                Cellingprice = jobPostModel.Cellingprice,
+                IsPrivate = jobPostModel.IsPrivate,
+                SpecialtyId = jobPostModel.SpecialtyId,
+                ServiceId = jobPostModel.ServiceId,
+            };
 
+        _context.Jobs.Add(job);
+            await _context.SaveChangesAsync();
             return CreatedAtAction("GetJob", new { id = job.Id }, job);
         }
 

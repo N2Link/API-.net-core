@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Api.Enities;
 using Api.Models;
 using Api.Service;
 using Microsoft.AspNetCore.Authorization;
@@ -13,7 +14,7 @@ using WebApi.Helpers;
 namespace Api.Controllers
 {
     [Authorize]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     [ApiController]
     public class RegisterController : ControllerBase
     {
@@ -34,7 +35,7 @@ namespace Api.Controllers
             account.Email = model.Email;
             account.RoleId = model.RoleID;
             //string path = _webHostEnvironment.WebRootPath + "\\Avatars\\default.jpg";
-            account.AvatarUrl = "default.jpg";
+            account.AvatarUrl = "\\Avatars\\default.jpg";
             try
             {
                 IUserService.UserEntitis userEntitis =

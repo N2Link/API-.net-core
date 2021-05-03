@@ -14,6 +14,8 @@ namespace Api.Models
             FreelancerSkills = new HashSet<FreelancerSkill>();
             JobFreelancers = new HashSet<Job>();
             JobRenters = new HashSet<Job>();
+            MessageReceives = new HashSet<Message>();
+            MessageSenders = new HashSet<Message>();
             OfferHistories = new HashSet<OfferHistory>();
             Ratings = new HashSet<Rating>();
         }
@@ -39,11 +41,14 @@ namespace Api.Models
         public virtual FormOfWork FormOnWork { get; set; }
         public virtual Level Level { get; set; }
         public virtual Role Role { get; set; }
+        public virtual Specialty Speccialize { get; set; }
         public virtual ICollection<CapacityProfile> CapacityProfiles { get; set; }
         public virtual ICollection<FreelancerService> FreelancerServices { get; set; }
         public virtual ICollection<FreelancerSkill> FreelancerSkills { get; set; }
         public virtual ICollection<Job> JobFreelancers { get; set; }
         public virtual ICollection<Job> JobRenters { get; set; }
+        public virtual ICollection<Message> MessageReceives { get; set; }
+        public virtual ICollection<Message> MessageSenders { get; set; }
         public virtual ICollection<OfferHistory> OfferHistories { get; set; }
         public virtual ICollection<Rating> Ratings { get; set; }
     }

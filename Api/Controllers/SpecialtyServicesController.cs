@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Api.Models;
-using Api.Unities;
 using Microsoft.AspNetCore.Authorization;
+using Api.Enities;
 
 namespace Api.Controllers
 {
@@ -35,6 +35,19 @@ namespace Api.Controllers
                     ServiceName = p.Service.Name,
                     SpecialtyName = p.Specialty.Name,
                 }).ToListAsync();
+        }
+
+        [HttpGet("getservices/{specialtyId}")]
+        public async Task<ActionResult<IEnumerable<Api.Models.Service>>> GetServices(int specialtyId)
+        {
+            return await _context.SpecialtyServices.Include(p => p.Service)
+                .Where(p => p.SpecialtyId == specialtyId).Select(p => p.Service).ToListAsync();
+        }   
+        [HttpGet("getspecialtys/{serviceId}")]
+        public async Task<ActionResult<IEnumerable<Specialty>>> GetSpecialtys(int serviceId)
+        {
+            return await _context.SpecialtyServices.Include(p => p.Specialty)
+                .Where(p => p.ServiceId == serviceId).Select(p => p.Specialty).ToListAsync();
         }
 
         // GET: api/SpecialtyServices/5

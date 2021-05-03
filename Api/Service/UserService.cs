@@ -27,8 +27,32 @@ namespace Api.Service
 
             public UserEntitis(Account account)
             {
+                if(account == null)
+                {
+                    return;
+                }
                 account.PasswordHash = null;
                 account.PasswordSalt = null;
+                if (account.Role != null)
+                {
+                    account.Role.Accounts = null;
+                }    
+                if (account.FormOnWork != null)
+                {
+                    account.FormOnWork.Accounts = null;
+                    account.FormOnWork.Jobs = null;
+
+                }  
+                if (account.Level != null)
+                {
+                    account.Level.Accounts = null;
+
+                }
+                if (account.Speccialize!=null)
+                {
+                    account.Speccialize.Accounts = null;
+                    account.Speccialize.SpecialtyServices = null;
+                }
                 this.account = account;
             }
             public UserEntitis createUserToken()
@@ -60,7 +84,9 @@ namespace Api.Service
         FreeLancerVNContext context = new FreeLancerVNContext();
         public IUserService.UserEntitis Auth(string email, string password)
         {
-            var list = context.Accounts.Include(p => p.Role).ToList();
+            var list = context.Accounts.Include(p => p.Role)
+                .Include(p=>p.FormOnWork).Include(p=>p.Level)
+                .Include(p=>p.Speccialize).ToList();
             Account account = list.SingleOrDefault(p => p.Email == email );
             if (account == null)
             {

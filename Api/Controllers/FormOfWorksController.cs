@@ -13,48 +13,48 @@ namespace Api.Controllers
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    public class SpecialtiesController : ControllerBase
+    public class FormOfWorksController : ControllerBase
     {
         private readonly FreeLancerVNContext _context;
 
-        public SpecialtiesController(FreeLancerVNContext context)
+        public FormOfWorksController(FreeLancerVNContext context)
         {
             _context = context;
         }
 
-        // GET: api/Specialties
+        // GET: api/FormOfWorks
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Specialty>>> GetSpecialties()
+        public async Task<ActionResult<IEnumerable<FormOfWork>>> GetFormOfWorks()
         {
-            return await _context.Specialties.ToListAsync();
+            return await _context.FormOfWorks.ToListAsync();
         }
 
-        // GET: api/Specialties/5
+        // GET: api/FormOfWorks/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Specialty>> GetSpecialty(int id)
+        public async Task<ActionResult<FormOfWork>> GetFormOfWork(int id)
         {
-            var specialty = await _context.Specialties.FindAsync(id);
+            var formOfWork = await _context.FormOfWorks.FindAsync(id);
 
-            if (specialty == null)
+            if (formOfWork == null)
             {
                 return NotFound();
             }
 
-            return specialty;
+            return formOfWork;
         }
 
-        // PUT: api/Specialties/5
+        // PUT: api/FormOfWorks/5
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutSpecialty(int id, Specialty specialty)
+        public async Task<IActionResult> PutFormOfWork(int id, FormOfWork formOfWork)
         {
-            if (id != specialty.Id)
+            if (id != formOfWork.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(specialty).State = EntityState.Modified;
+            _context.Entry(formOfWork).State = EntityState.Modified;
 
             try
             {
@@ -62,7 +62,7 @@ namespace Api.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!SpecialtyExists(id))
+                if (!FormOfWorkExists(id))
                 {
                     return NotFound();
                 }
@@ -75,37 +75,37 @@ namespace Api.Controllers
             return NoContent();
         }
 
-        // POST: api/Specialties
+        // POST: api/FormOfWorks
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPost]
-        public async Task<ActionResult<Specialty>> PostSpecialty(Specialty specialty)
+        public async Task<ActionResult<FormOfWork>> PostFormOfWork(FormOfWork formOfWork)
         {
-            _context.Specialties.Add(specialty);
+            _context.FormOfWorks.Add(formOfWork);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetSpecialty", new { id = specialty.Id }, specialty);
+            return CreatedAtAction("GetFormOfWork", new { id = formOfWork.Id }, formOfWork);
         }
 
-        // DELETE: api/Specialties/5
+        // DELETE: api/FormOfWorks/5
         [HttpDelete("{id}")]
-        public async Task<ActionResult<Specialty>> DeleteSpecialty(int id)
+        public async Task<ActionResult<FormOfWork>> DeleteFormOfWork(int id)
         {
-            var specialty = await _context.Specialties.FindAsync(id);
-            if (specialty == null)
+            var formOfWork = await _context.FormOfWorks.FindAsync(id);
+            if (formOfWork == null)
             {
                 return NotFound();
             }
 
-            _context.Specialties.Remove(specialty);
+            _context.FormOfWorks.Remove(formOfWork);
             await _context.SaveChangesAsync();
 
-            return specialty;
+            return formOfWork;
         }
 
-        private bool SpecialtyExists(int id)
+        private bool FormOfWorkExists(int id)
         {
-            return _context.Specialties.Any(e => e.Id == id);
+            return _context.FormOfWorks.Any(e => e.Id == id);
         }
     }
 }

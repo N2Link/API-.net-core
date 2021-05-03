@@ -13,48 +13,48 @@ namespace Api.Controllers
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    public class SpecialtiesController : ControllerBase
+    public class SkillsController : ControllerBase
     {
         private readonly FreeLancerVNContext _context;
 
-        public SpecialtiesController(FreeLancerVNContext context)
+        public SkillsController(FreeLancerVNContext context)
         {
             _context = context;
         }
 
-        // GET: api/Specialties
+        // GET: api/Skills
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Specialty>>> GetSpecialties()
+        public async Task<ActionResult<IEnumerable<Skill>>> GetSkills()
         {
-            return await _context.Specialties.ToListAsync();
+            return await _context.Skills.ToListAsync();
         }
 
-        // GET: api/Specialties/5
+        // GET: api/Skills/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Specialty>> GetSpecialty(int id)
+        public async Task<ActionResult<Skill>> GetSkill(int id)
         {
-            var specialty = await _context.Specialties.FindAsync(id);
+            var skill = await _context.Skills.FindAsync(id);
 
-            if (specialty == null)
+            if (skill == null)
             {
                 return NotFound();
             }
 
-            return specialty;
+            return skill;
         }
 
-        // PUT: api/Specialties/5
+        // PUT: api/Skills/5
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutSpecialty(int id, Specialty specialty)
+        public async Task<IActionResult> PutSkill(int id, Skill skill)
         {
-            if (id != specialty.Id)
+            if (id != skill.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(specialty).State = EntityState.Modified;
+            _context.Entry(skill).State = EntityState.Modified;
 
             try
             {
@@ -62,7 +62,7 @@ namespace Api.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!SpecialtyExists(id))
+                if (!SkillExists(id))
                 {
                     return NotFound();
                 }
@@ -75,37 +75,37 @@ namespace Api.Controllers
             return NoContent();
         }
 
-        // POST: api/Specialties
+        // POST: api/Skills
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPost]
-        public async Task<ActionResult<Specialty>> PostSpecialty(Specialty specialty)
+        public async Task<ActionResult<Skill>> PostSkill(Skill skill)
         {
-            _context.Specialties.Add(specialty);
+            _context.Skills.Add(skill);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetSpecialty", new { id = specialty.Id }, specialty);
+            return CreatedAtAction("GetSkill", new { id = skill.Id }, skill);
         }
 
-        // DELETE: api/Specialties/5
+        // DELETE: api/Skills/5
         [HttpDelete("{id}")]
-        public async Task<ActionResult<Specialty>> DeleteSpecialty(int id)
+        public async Task<ActionResult<Skill>> DeleteSkill(int id)
         {
-            var specialty = await _context.Specialties.FindAsync(id);
-            if (specialty == null)
+            var skill = await _context.Skills.FindAsync(id);
+            if (skill == null)
             {
                 return NotFound();
             }
 
-            _context.Specialties.Remove(specialty);
+            _context.Skills.Remove(skill);
             await _context.SaveChangesAsync();
 
-            return specialty;
+            return skill;
         }
 
-        private bool SpecialtyExists(int id)
+        private bool SkillExists(int id)
         {
-            return _context.Specialties.Any(e => e.Id == id);
+            return _context.Skills.Any(e => e.Id == id);
         }
     }
 }

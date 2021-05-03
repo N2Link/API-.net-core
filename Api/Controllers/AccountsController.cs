@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Api.Models;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
+using Api.Enities;
 
 namespace Api.Controllers
 {
@@ -66,12 +67,9 @@ namespace Api.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutAccount(int id, Account account)
+        public async Task<IActionResult> PutAccount(int id, AccountEditModel accountEditModel)
         {
-            if (id != account.Id)
-            {
-                return BadRequest();
-            }
+
             String jwt = Request.Headers["Authorization"];
             jwt = jwt.Substring(7);
             //Decode jwt and get payload
@@ -81,16 +79,24 @@ namespace Api.Controllers
             var tokenS = jsonToken as JwtSecurityToken;
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
-            var role = Int32.Parse(tokenS.Claims.First(claim => claim.Type == "role").Value);
-            if (role != 1)
+            var account = _context.Accounts.Find(id);
+            if(account == null||account.Email!=email)
             {
-                if (email != account.Email)
-                {
-                    return BadRequest(ModelState);
-                }
+                return BadRequest();
             }
 
-            _context.Entry(account).State = EntityState.Modified;
+            account.Name = accountEditModel.Name;
+            account.RoleId = accountEditModel.RoleId;
+            account.Phone = accountEditModel.Phone;
+            account.Tile = accountEditModel.Tile;   
+            account.Description = accountEditModel.Description;
+            account.Website = accountEditModel.Website;
+            account.Speccializeid = accountEditModel.Speccializeid;
+            account.LevelId = accountEditModel.LevelId;
+            account.FormOnWorkId = accountEditModel.FormOnWorkId;
+            account.OnReady = account.OnReady;
+
+             _context.Entry(account).State = EntityState.Modified;
             try
             {
                 await _context.SaveChangesAsync();
@@ -142,8 +148,8 @@ namespace Api.Controllers
         {
             return _context.Accounts.Any(e => e.Id == id);
         }
-        [HttpGet("fromtoken/{token}")]
-        public ActionResult<Account> GetUserFromToken(string token)
+        [HttpGet("fromtoken")]
+        public ActionResult<Account> GetUserFromToken()
         {
             String jwt = Request.Headers["Authorization"];
             jwt = jwt.Substring(7);

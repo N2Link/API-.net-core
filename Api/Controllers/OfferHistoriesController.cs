@@ -41,8 +41,7 @@ namespace Api.Controllers
             var tokenS = jsonToken as JwtSecurityToken;
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
-            var role = Int32.Parse(tokenS.Claims.First(claim => claim.Type == "role").Value);
-            if (account.Email != email || role != 2)
+            if (account.Email != email)
             {
                 return BadRequest();
             }
@@ -68,9 +67,8 @@ namespace Api.Controllers
             var tokenS = jsonToken as JwtSecurityToken;
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
-            var role = Int32.Parse(tokenS.Claims.First(claim => claim.Type == "role").Value);
 
-            if (account.Email != email || role != 3)
+            if (account.Email != email)
             {
                 return BadRequest();
             }
@@ -117,8 +115,7 @@ namespace Api.Controllers
             var tokenS = jsonToken as JwtSecurityToken;
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
-            var role = Int32.Parse(tokenS.Claims.First(claim => claim.Type == "role").Value);
-            if (account.Email != email || role != 3)
+            if (account.Email != email)
             {
                 return BadRequest();
             }
@@ -186,8 +183,7 @@ namespace Api.Controllers
             var tokenS = jsonToken as JwtSecurityToken;
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
-            var role = Int32.Parse(tokenS.Claims.First(claim => claim.Type == "role").Value);
-            if (email != freelancer.Email || role != 2 || freelancer.IsAccuracy == false)
+            if (email != freelancer.Email || freelancer.IsAccuracy == false)
             {
                 return BadRequest();
             }

@@ -22,7 +22,6 @@ namespace Api.Models
         public virtual DbSet<FormOfWork> FormOfWorks { get; set; }
         public virtual DbSet<FreelancerService> FreelancerServices { get; set; }
         public virtual DbSet<FreelancerSkill> FreelancerSkills { get; set; }
-        public virtual DbSet<Image> Images { get; set; }
         public virtual DbSet<Job> Jobs { get; set; }
         public virtual DbSet<JobSkill> JobSkills { get; set; }
         public virtual DbSet<Level> Levels { get; set; }
@@ -109,6 +108,11 @@ namespace Api.Models
                     .HasForeignKey(d => d.RoleId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_User_Role");
+
+                entity.HasOne(d => d.Speccialize)
+                    .WithMany(p => p.Accounts)
+                    .HasForeignKey(d => d.Speccializeid)
+                    .HasConstraintName("FK_Account_Specialty");
             });
 
             modelBuilder.Entity<CapacityProfile>(entity =>
@@ -125,6 +129,8 @@ namespace Api.Models
                 entity.Property(e => e.Description)
                     .IsRequired()
                     .HasMaxLength(500);
+
+                entity.Property(e => e.ImageUrl).HasMaxLength(100);
 
                 entity.Property(e => e.Urlweb).HasMaxLength(100);
 
@@ -190,30 +196,6 @@ namespace Api.Models
                     .HasForeignKey(d => d.SkilId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_FreelancerSkill_Skill");
-            });
-
-            modelBuilder.Entity<Image>(entity =>
-            {
-                entity.ToTable("Image");
-
-                entity.Property(e => e.Id).HasColumnName("ID");
-
-                entity.Property(e => e.CprofileName)
-                    .IsRequired()
-                    .HasMaxLength(200)
-                    .HasColumnName("CProfileName");
-
-                entity.Property(e => e.FreeLancerId).HasColumnName("FreeLancerID");
-
-                entity.Property(e => e.Url)
-                    .IsRequired()
-                    .HasMaxLength(50);
-
-                entity.HasOne(d => d.CapacityProfile)
-                    .WithMany(p => p.Images)
-                    .HasForeignKey(d => new { d.FreeLancerId, d.CprofileName })
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Image_CapacityProfile");
             });
 
             modelBuilder.Entity<Job>(entity =>
@@ -285,7 +267,7 @@ namespace Api.Models
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Job_TypeOfWork");
 
-                entity.HasOne(d => d.SpecialtyService)
+                entity.HasOne(d => d.S)
                     .WithMany(p => p.Jobs)
                     .HasForeignKey(d => new { d.SpecialtyId, d.ServiceId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
@@ -332,8 +314,6 @@ namespace Api.Models
 
                 entity.Property(e => e.Id).HasColumnName("ID");
 
-                entity.Property(e => e.JobId).HasColumnName("JobID");
-
                 entity.Property(e => e.Message1)
                     .IsRequired()
                     .HasMaxLength(500)
@@ -347,11 +327,17 @@ namespace Api.Models
                     .IsRequired()
                     .HasMaxLength(20);
 
-                entity.HasOne(d => d.Job)
-                    .WithMany(p => p.Messages)
-                    .HasForeignKey(d => d.JobId)
+                entity.HasOne(d => d.Receive)
+                    .WithMany(p => p.MessageReceives)
+                    .HasForeignKey(d => d.ReceiveId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Message_Job");
+                    .HasConstraintName("FK_Message_Account1");
+
+                entity.HasOne(d => d.Sender)
+                    .WithMany(p => p.MessageSenders)
+                    .HasForeignKey(d => d.SenderId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Message_Account");
             });
 
             modelBuilder.Entity<OfferHistory>(entity =>
@@ -479,6 +465,8 @@ namespace Api.Models
                 entity.ToTable("Specialty");
 
                 entity.Property(e => e.Id).HasColumnName("ID");
+
+                entity.Property(e => e.Image).HasMaxLength(100);
 
                 entity.Property(e => e.Name)
                     .IsRequired()

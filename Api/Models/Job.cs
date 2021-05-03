@@ -10,7 +10,6 @@ namespace Api.Models
         public Job()
         {
             JobSkills = new HashSet<JobSkill>();
-            Messages = new HashSet<Message>();
             OfferHistories = new HashSet<OfferHistory>();
             Todolists = new HashSet<Todolist>();
         }
@@ -36,10 +35,9 @@ namespace Api.Models
         public virtual Rating IdNavigation { get; set; }
         public virtual Payform Payform { get; set; }
         public virtual Account Renter { get; set; }
-        public virtual SpecialtyService SpecialtyService { get; set; }
+        public virtual SpecialtyService S { get; set; }
         public virtual TypeOfWork Type { get; set; }
         public virtual ICollection<JobSkill> JobSkills { get; set; }
-        public virtual ICollection<Message> Messages { get; set; }
         public virtual ICollection<OfferHistory> OfferHistories { get; set; }
         public virtual ICollection<Todolist> Todolists { get; set; }
     }

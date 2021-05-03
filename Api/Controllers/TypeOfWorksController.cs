@@ -13,48 +13,48 @@ namespace Api.Controllers
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    public class SpecialtiesController : ControllerBase
+    public class TypeOfWorksController : ControllerBase
     {
         private readonly FreeLancerVNContext _context;
 
-        public SpecialtiesController(FreeLancerVNContext context)
+        public TypeOfWorksController(FreeLancerVNContext context)
         {
             _context = context;
         }
 
-        // GET: api/Specialties
+        // GET: api/TypeOfWorks
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Specialty>>> GetSpecialties()
+        public async Task<ActionResult<IEnumerable<TypeOfWork>>> GetTypeOfWorks()
         {
-            return await _context.Specialties.ToListAsync();
+            return await _context.TypeOfWorks.ToListAsync();
         }
 
-        // GET: api/Specialties/5
+        // GET: api/TypeOfWorks/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Specialty>> GetSpecialty(int id)
+        public async Task<ActionResult<TypeOfWork>> GetTypeOfWork(int id)
         {
-            var specialty = await _context.Specialties.FindAsync(id);
+            var typeOfWork = await _context.TypeOfWorks.FindAsync(id);
 
-            if (specialty == null)
+            if (typeOfWork == null)
             {
                 return NotFound();
             }
 
-            return specialty;
+            return typeOfWork;
         }
 
-        // PUT: api/Specialties/5
+        // PUT: api/TypeOfWorks/5
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutSpecialty(int id, Specialty specialty)
+        public async Task<IActionResult> PutTypeOfWork(int id, TypeOfWork typeOfWork)
         {
-            if (id != specialty.Id)
+            if (id != typeOfWork.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(specialty).State = EntityState.Modified;
+            _context.Entry(typeOfWork).State = EntityState.Modified;
 
             try
             {
@@ -62,7 +62,7 @@ namespace Api.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!SpecialtyExists(id))
+                if (!TypeOfWorkExists(id))
                 {
                     return NotFound();
                 }
@@ -75,37 +75,37 @@ namespace Api.Controllers
             return NoContent();
         }
 
-        // POST: api/Specialties
+        // POST: api/TypeOfWorks
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPost]
-        public async Task<ActionResult<Specialty>> PostSpecialty(Specialty specialty)
+        public async Task<ActionResult<TypeOfWork>> PostTypeOfWork(TypeOfWork typeOfWork)
         {
-            _context.Specialties.Add(specialty);
+            _context.TypeOfWorks.Add(typeOfWork);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetSpecialty", new { id = specialty.Id }, specialty);
+            return CreatedAtAction("GetTypeOfWork", new { id = typeOfWork.Id }, typeOfWork);
         }
 
-        // DELETE: api/Specialties/5
+        // DELETE: api/TypeOfWorks/5
         [HttpDelete("{id}")]
-        public async Task<ActionResult<Specialty>> DeleteSpecialty(int id)
+        public async Task<ActionResult<TypeOfWork>> DeleteTypeOfWork(int id)
         {
-            var specialty = await _context.Specialties.FindAsync(id);
-            if (specialty == null)
+            var typeOfWork = await _context.TypeOfWorks.FindAsync(id);
+            if (typeOfWork == null)
             {
                 return NotFound();
             }
 
-            _context.Specialties.Remove(specialty);
+            _context.TypeOfWorks.Remove(typeOfWork);
             await _context.SaveChangesAsync();
 
-            return specialty;
+            return typeOfWork;
         }
 
-        private bool SpecialtyExists(int id)
+        private bool TypeOfWorkExists(int id)
         {
-            return _context.Specialties.Any(e => e.Id == id);
+            return _context.TypeOfWorks.Any(e => e.Id == id);
         }
     }
 }
