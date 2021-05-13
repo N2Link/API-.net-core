@@ -52,12 +52,62 @@ namespace Api.Controllers
         // PUT: api/CapacityProfiles/5
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutCapacityProfile(int id, CapacityProfile capacityProfile)
+        [HttpPut("id")]
+        public async Task<IActionResult> PutCapacityProfile(int id, CProfilePostModel cpEditModel)
         {
-            if (id != capacityProfile.FreelancerId)
+            CapacityProfile capacityProfile = _context.CapacityProfiles
+                        .Include(p => p.ProfileServices)
+                        .SingleOrDefault(p => p.Id == id);
+            if (capacityProfile == null)
+            {
+                return NotFound();
+            }
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var account = _context.Accounts.SingleOrDefaultAsync(p => p.Email == email);
+            if (account == null||account.Id!=capacityProfile.FreelancerId)
             {
                 return BadRequest();
+            }
+            //create image
+            string imageUrl = _webHostEnvironment.WebRootPath;
+            string newURL = "\\Images\\" + capacityProfile.Id +"_"+ cpEditModel.ImageName;
+            using (FileStream fs = System.IO.File.Create(imageUrl + newURL))
+            {
+                System.IO.File.WriteAllBytes(imageUrl + newURL, Convert.FromBase64String(cpEditModel.ImageBase64));
+            }
+            if (capacityProfile.ImageUrl != null)
+            {
+                try
+                {
+                    System.IO.File.Delete(imageUrl + capacityProfile.ImageUrl);
+                }
+                catch (Exception)
+                {
+                    throw;
+                }
+            }
+            capacityProfile.Name = cpEditModel.Name;
+            capacityProfile.Description = cpEditModel.Description;
+            capacityProfile.Urlweb = cpEditModel.Urlweb;
+            capacityProfile.ImageUrl = newURL;
+            _context.ProfileServices.RemoveRange(capacityProfile.ProfileServices.ToArray());
+            await _context.SaveChangesAsync();
+
+            foreach (var item in cpEditModel.ServiceIds)
+            {
+                _context.ProfileServices.Add(new ProfileService
+                {
+                    Cpid = id,
+                    ServiceId = item,
+                });
             }
 
             _context.Entry(capacityProfile).State = EntityState.Modified;
@@ -102,14 +152,6 @@ namespace Api.Controllers
                 return BadRequest();
             }
 
-            //create image
-            string imageUrl = _webHostEnvironment.WebRootPath;
-            string newURL = "\\Images\\"+ account.Id + "_" 
-                + cProfilePostModel.Name.Trim().Substring(0,10)+"_"+cProfilePostModel.ImageName;
-            using (FileStream fs = System.IO.File.Create(imageUrl + newURL))
-            {
-                System.IO.File.WriteAllBytes(imageUrl + newURL, Convert.FromBase64String(cProfilePostModel.ImageBase64));
-            }
 
 
             CapacityProfile capacityProfile = new CapacityProfile()
@@ -117,10 +159,27 @@ namespace Api.Controllers
                 Name = cProfilePostModel.Name,
                 Description = cProfilePostModel.Description,
                 Urlweb = cProfilePostModel.Urlweb,
-                ImageUrl = newURL,
             };
-
             _context.CapacityProfiles.Add(capacityProfile);
+            await _context.SaveChangesAsync();
+
+            //create image
+            string imageUrl = _webHostEnvironment.WebRootPath;
+            string newURL = "\\Images\\"+ capacityProfile.Id  + "_" + cProfilePostModel.ImageName;
+            using (FileStream fs = System.IO.File.Create(imageUrl + newURL))
+            {
+                System.IO.File.WriteAllBytes(imageUrl + newURL, Convert.FromBase64String(cProfilePostModel.ImageBase64));
+            }
+            capacityProfile.ImageUrl = newURL;
+
+            foreach (var item in cProfilePostModel.ServiceIds)
+            {
+                _context.ProfileServices.Add(new ProfileService
+                {
+                    Cpid = capacityProfile.Id,
+                    ServiceId = item,
+                });
+            }
             try
             {
                 await _context.SaveChangesAsync();
@@ -158,7 +217,7 @@ namespace Api.Controllers
 
         private bool CapacityProfileExists(int id)
         {
-            return _context.CapacityProfiles.Any(e => e.FreelancerId == id);
+            return _context.CapacityProfiles.Any(e => e.Id == id);
         }
     }
 }

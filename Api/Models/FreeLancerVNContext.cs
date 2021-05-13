@@ -29,6 +29,7 @@ namespace Api.Models
         public virtual DbSet<OfferHistory> OfferHistories { get; set; }
         public virtual DbSet<Payform> Payforms { get; set; }
         public virtual DbSet<ProfileService> ProfileServices { get; set; }
+        public virtual DbSet<Province> Provinces { get; set; }
         public virtual DbSet<Rating> Ratings { get; set; }
         public virtual DbSet<Role> Roles { get; set; }
         public virtual DbSet<Service> Services { get; set; }
@@ -117,20 +118,21 @@ namespace Api.Models
 
             modelBuilder.Entity<CapacityProfile>(entity =>
             {
-                entity.HasKey(e => new { e.FreelancerId, e.Name })
-                    .HasName("PK_CapacityProfile_1");
-
                 entity.ToTable("CapacityProfile");
 
-                entity.Property(e => e.FreelancerId).HasColumnName("FreelancerID");
-
-                entity.Property(e => e.Name).HasMaxLength(200);
+                entity.Property(e => e.Id).HasColumnName("ID");
 
                 entity.Property(e => e.Description)
                     .IsRequired()
                     .HasMaxLength(500);
 
+                entity.Property(e => e.FreelancerId).HasColumnName("FreelancerID");
+
                 entity.Property(e => e.ImageUrl).HasMaxLength(100);
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(200);
 
                 entity.Property(e => e.Urlweb).HasMaxLength(100);
 
@@ -202,9 +204,7 @@ namespace Api.Models
             {
                 entity.ToTable("Job");
 
-                entity.Property(e => e.Id)
-                    .ValueGeneratedOnAdd()
-                    .HasColumnName("ID");
+                entity.Property(e => e.Id).HasColumnName("ID");
 
                 entity.Property(e => e.Deadline).HasColumnType("date");
 
@@ -221,6 +221,11 @@ namespace Api.Models
                     .HasMaxLength(200);
 
                 entity.Property(e => e.PayformId).HasColumnName("PayformID");
+
+                entity.Property(e => e.ProvinceId)
+                    .HasMaxLength(5)
+                    .IsUnicode(false)
+                    .HasColumnName("ProvinceID");
 
                 entity.Property(e => e.RenterId).HasColumnName("RenterID");
 
@@ -243,17 +248,16 @@ namespace Api.Models
                     .HasForeignKey(d => d.FreelancerId)
                     .HasConstraintName("FK_Job_User1");
 
-                entity.HasOne(d => d.IdNavigation)
-                    .WithOne(p => p.Job)
-                    .HasForeignKey<Job>(d => d.Id)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Job_Rating");
-
                 entity.HasOne(d => d.Payform)
                     .WithMany(p => p.Jobs)
                     .HasForeignKey(d => d.PayformId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Job_Payform");
+
+                entity.HasOne(d => d.Province)
+                    .WithMany(p => p.Jobs)
+                    .HasForeignKey(d => d.ProvinceId)
+                    .HasConstraintName("FK_Job_Province");
 
                 entity.HasOne(d => d.Renter)
                     .WithMany(p => p.JobRenters)
@@ -386,45 +390,69 @@ namespace Api.Models
 
             modelBuilder.Entity<ProfileService>(entity =>
             {
-                entity.HasKey(e => new { e.FreelancerId, e.ServiceId, e.Name });
+                entity.HasKey(e => new { e.Cpid, e.ServiceId })
+                    .HasName("PK_ProfileService_1");
 
                 entity.ToTable("ProfileService");
 
-                entity.Property(e => e.FreelancerId).HasColumnName("FreelancerID");
+                entity.Property(e => e.Cpid).HasColumnName("CPID");
 
                 entity.Property(e => e.ServiceId).HasColumnName("ServiceID");
 
-                entity.Property(e => e.Name).HasMaxLength(200);
+                entity.HasOne(d => d.Cp)
+                    .WithMany(p => p.ProfileServices)
+                    .HasForeignKey(d => d.Cpid)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_ProfileService_CapacityProfile");
 
                 entity.HasOne(d => d.Service)
                     .WithMany(p => p.ProfileServices)
                     .HasForeignKey(d => d.ServiceId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_ProfileService_Service");
+            });
 
-                entity.HasOne(d => d.CapacityProfile)
-                    .WithMany(p => p.ProfileServices)
-                    .HasForeignKey(d => new { d.FreelancerId, d.Name })
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_ProfileService_CapacityProfile");
+            modelBuilder.Entity<Province>(entity =>
+            {
+                entity.ToTable("Province");
+
+                entity.Property(e => e.ProvinceId)
+                    .HasMaxLength(5)
+                    .IsUnicode(false)
+                    .HasColumnName("ProvinceID");
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.Property(e => e.Type)
+                    .IsRequired()
+                    .HasMaxLength(30);
             });
 
             modelBuilder.Entity<Rating>(entity =>
             {
-                entity.HasKey(e => e.JobId);
-
                 entity.ToTable("Rating");
 
-                entity.Property(e => e.JobId)
+                entity.Property(e => e.Id)
                     .ValueGeneratedNever()
-                    .HasColumnName("JobID");
+                    .HasColumnName("ID");
 
                 entity.Property(e => e.FreelancerId).HasColumnName("FreelancerID");
+
+                entity.Property(e => e.JobId).HasColumnName("JobID");
 
                 entity.HasOne(d => d.Freelancer)
                     .WithMany(p => p.Ratings)
                     .HasForeignKey(d => d.FreelancerId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Rating_User");
+
+                entity.HasOne(d => d.Job)
+                    .WithMany(p => p.Ratings)
+                    .HasForeignKey(d => d.JobId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Rating_Job");
             });
 
             modelBuilder.Entity<Role>(entity =>

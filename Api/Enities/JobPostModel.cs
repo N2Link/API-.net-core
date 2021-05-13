@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Api.Models;
 
 namespace Api.Enities
 {
@@ -19,5 +20,7 @@ namespace Api.Enities
         public int IsPrivate { get; set; }
         public int SpecialtyId { get; set; }
         public int ServiceId { get; set; }
+        public string ProvinceId { get; set; }
+        public ICollection<Skill> Skills { get; set; }
     }
 }

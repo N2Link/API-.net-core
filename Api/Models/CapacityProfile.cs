@@ -12,6 +12,7 @@ namespace Api.Models
             ProfileServices = new HashSet<ProfileService>();
         }
 
+        public int Id { get; set; }
         public int FreelancerId { get; set; }
         public string Name { get; set; }
         public string Urlweb { get; set; }

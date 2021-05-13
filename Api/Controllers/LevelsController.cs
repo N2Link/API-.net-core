@@ -14,48 +14,48 @@ namespace Api.Controllers
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    public class ServicesController : ControllerBase
+    public class LevelsController : ControllerBase
     {
         private readonly FreeLancerVNContext _context;
 
-        public ServicesController(FreeLancerVNContext context)
+        public LevelsController(FreeLancerVNContext context)
         {
             _context = context;
         }
 
-        // GET: api/Services
+        // GET: api/Levels
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ResponseIdName>>> GetServices()
+        public async Task<ActionResult<IEnumerable<ResponseIdName>>> GetLevels()
         {
-            return await _context.Services.Select(p=> new ResponseIdName(p)).ToListAsync();
+            return await _context.Levels.Select(p=> new ResponseIdName(p)).ToListAsync();
         }
 
-        // GET: api/Services/5
+        // GET: api/Levels/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<ResponseIdName>> GetService(int id)
+        public async Task<ActionResult<ResponseIdName>> GetLevel(int id)
         {
-            var service = await _context.Services.FindAsync(id);
+            var level = await _context.Levels.FindAsync(id);
 
-            if (service == null)
+            if (level == null)
             {
                 return NotFound();
             }
 
-            return new ResponseIdName(service);
+            return new ResponseIdName(level);
         }
 
-        // PUT: api/Services/5
+        // PUT: api/Levels/5
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutService(int id, Api.Models.Service service)
+        public async Task<IActionResult> PutLevel(int id, Level level)
         {
-            if (id != service.Id)
+            if (id != level.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(service).State = EntityState.Modified;
+            _context.Entry(level).State = EntityState.Modified;
 
             try
             {
@@ -63,7 +63,7 @@ namespace Api.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!ServiceExists(id))
+                if (!LevelExists(id))
                 {
                     return NotFound();
                 }
@@ -76,37 +76,37 @@ namespace Api.Controllers
             return NoContent();
         }
 
-        // POST: api/Services
+        // POST: api/Levels
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPost]
-        public async Task<ActionResult<Api.Models.Service>> PostService(Api.Models.Service service)
+        public async Task<ActionResult<Level>> PostLevel(Level level)
         {
-            _context.Services.Add(service);
+            _context.Levels.Add(level);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetService", new { id = service.Id }, service);
+            return CreatedAtAction("GetLevel", new { id = level.Id }, level);
         }
 
-        // DELETE: api/Services/5
+        // DELETE: api/Levels/5
         [HttpDelete("{id}")]
-        public async Task<ActionResult<Api.Models.Service>> DeleteService(int id)
+        public async Task<ActionResult<Level>> DeleteLevel(int id)
         {
-            var service = await _context.Services.FindAsync(id);
-            if (service == null)
+            var level = await _context.Levels.FindAsync(id);
+            if (level == null)
             {
                 return NotFound();
             }
 
-            _context.Services.Remove(service);
+            _context.Levels.Remove(level);
             await _context.SaveChangesAsync();
 
-            return service;
+            return level;
         }
 
-        private bool ServiceExists(int id)
+        private bool LevelExists(int id)
         {
-            return _context.Services.Any(e => e.Id == id);
+            return _context.Levels.Any(e => e.Id == id);
         }
     }
 }

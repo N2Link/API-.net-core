@@ -15,7 +15,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Api.Controllers
 {
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class ImagesController : ControllerBase
@@ -42,8 +41,17 @@ namespace Api.Controllers
         {
             string contentType;
             var fileName = rootpath + url;
-            new FileExtensionContentTypeProvider().TryGetContentType(fileName, out contentType);
-            return PhysicalFile(fileName, contentType);
+            try
+            {
+                new FileExtensionContentTypeProvider().TryGetContentType(fileName, out contentType);
+                return PhysicalFile(fileName, contentType);
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
         }
 
         [HttpPost("avatars")]

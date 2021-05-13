@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Api.Models;
 using Microsoft.AspNetCore.Authorization;
+using Api.Enities;
 
 namespace Api.Controllers
 {
@@ -24,14 +25,14 @@ namespace Api.Controllers
 
         // GET: api/TypeOfWorks
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TypeOfWork>>> GetTypeOfWorks()
+        public async Task<ActionResult<IEnumerable<ResponseIdName>>> GetTypeOfWorks()
         {
-            return await _context.TypeOfWorks.ToListAsync();
+            return await _context.TypeOfWorks.Select(p=> new ResponseIdName(p)).ToListAsync();
         }
 
         // GET: api/TypeOfWorks/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<TypeOfWork>> GetTypeOfWork(int id)
+        public async Task<ActionResult<ResponseIdName>> GetTypeOfWork(int id)
         {
             var typeOfWork = await _context.TypeOfWorks.FindAsync(id);
 
@@ -40,7 +41,7 @@ namespace Api.Controllers
                 return NotFound();
             }
 
-            return typeOfWork;
+            return new ResponseIdName(typeOfWork) ;
         }
 
         // PUT: api/TypeOfWorks/5

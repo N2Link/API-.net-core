@@ -15,8 +15,11 @@ namespace Api.Enities
         public string Details { get; set; }
         public IUserService.UserEntitis Renter { get; set; }
         public IUserService.UserEntitis Freelancer { get; set; }
-        public ICollection<JobSkill> JobSkills { get; set; }
-        public SS SS { get; set; }
+        public ICollection<Skill> Skills { get; set; }
+        public SpecialtyService SpecialtyService { get; set; }
+        public TypeOfWork TypeOfWork { get; set; }
+        public FormOfWork FormOfWork { get; set; }
+        public Province Province { get; set; }
         public int Floorprice { get; set; }
         public int Cellingprice { get; set; }
         public Payform Payform { get; set; }

@@ -11,6 +11,7 @@ namespace Api.Models
         {
             JobSkills = new HashSet<JobSkill>();
             OfferHistories = new HashSet<OfferHistory>();
+            Ratings = new HashSet<Rating>();
             Todolists = new HashSet<Todolist>();
         }
 
@@ -26,19 +27,21 @@ namespace Api.Models
         public DateTime Deadline { get; set; }
         public int Floorprice { get; set; }
         public int Cellingprice { get; set; }
-        public int IsPrivate { get; set; }
+        public bool IsPrivate { get; set; }
         public int SpecialtyId { get; set; }
         public int ServiceId { get; set; }
+        public string ProvinceId { get; set; }
 
         public virtual FormOfWork Form { get; set; }
         public virtual Account Freelancer { get; set; }
-        public virtual Rating IdNavigation { get; set; }
         public virtual Payform Payform { get; set; }
+        public virtual Province Province { get; set; }
         public virtual Account Renter { get; set; }
         public virtual SpecialtyService S { get; set; }
         public virtual TypeOfWork Type { get; set; }
         public virtual ICollection<JobSkill> JobSkills { get; set; }
         public virtual ICollection<OfferHistory> OfferHistories { get; set; }
+        public virtual ICollection<Rating> Ratings { get; set; }
         public virtual ICollection<Todolist> Todolists { get; set; }
     }
 }

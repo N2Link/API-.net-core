@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Net.Mail;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -90,7 +91,7 @@ namespace Api.Service
             Account account = list.SingleOrDefault(p => p.Email == email );
             if (account == null)
             {
-                throw new AppException("Username doesn't exist");
+                throw new AppException("Email doesn't exist");
             }
             if (!VerifyPasswordHash(password, account.PasswordHash, account.PasswordSalt))
                 throw new AppException("Password not correct");
@@ -101,10 +102,18 @@ namespace Api.Service
 
         public IUserService.UserEntitis Create(Account account, string password)
         {
+            try
+            {
+                MailAddress m = new MailAddress(account.Email);
+            }
+            catch (FormatException)
+            {
+                throw new AppException("Email not formatted correctly");
+            }
             var acc = context.Accounts.SingleOrDefault(p => p.Email == account.Email);
             if (acc != null)
             {
-                throw new AppException("Username is exist");
+                throw new AppException("Email already exist");
             }
             byte[] passwordHash, passwordSalt;
             CreatePasswordHash(password, out passwordHash, out passwordSalt);

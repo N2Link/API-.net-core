@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Api.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,5 +18,7 @@ namespace Api.Enities
         public int LevelId { get; set; }
         public bool OnReady { get; set; }
         public int FormOnWorkId { get; set; }
+        public List<Skill> Skills { get; set; }
+        public List<Api.Models.Service> Services { get; set; }
     }
 }

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Api.Models;
 using Microsoft.AspNetCore.Authorization;
+using Api.Enities;
 
 namespace Api.Controllers
 {
@@ -24,14 +25,14 @@ namespace Api.Controllers
 
         // GET: api/Payforms
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Payform>>> GetPayforms()
+        public async Task<ActionResult<IEnumerable<ResponseIdName>>> GetPayforms()
         {
-            return await _context.Payforms.ToListAsync();
+            return await _context.Payforms.Select(p=>new ResponseIdName(p)).ToListAsync();
         }
 
         // GET: api/Payforms/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Payform>> GetPayform(int id)
+        public async Task<ActionResult<ResponseIdName>> GetPayform(int id)
         {
             var payform = await _context.Payforms.FindAsync(id);
 
@@ -40,7 +41,7 @@ namespace Api.Controllers
                 return NotFound();
             }
 
-            return payform;
+            return new ResponseIdName(payform);
         }
 
         // PUT: api/Payforms/5

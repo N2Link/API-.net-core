@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Api.Models;
 using Microsoft.AspNetCore.Authorization;
+using Api.Enities;
 
 namespace Api.Controllers
 {
@@ -26,7 +27,14 @@ namespace Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Specialty>>> GetSpecialties()
         {
-            return await _context.Specialties.ToListAsync();
+            return await _context.Specialties
+                .Select(p=>new Specialty()
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Image = p.Image
+                })
+                .ToListAsync();
         }
 
         // GET: api/Specialties/5
@@ -39,7 +47,8 @@ namespace Api.Controllers
             {
                 return NotFound();
             }
-
+            specialty.Accounts = null;
+            specialty.SpecialtyServices = null;
             return specialty;
         }
 

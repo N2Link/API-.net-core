@@ -9,6 +9,7 @@ using Api.Models;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
 using Api.Enities;
+using WebApi.Helpers;
 
 namespace Api.Controllers
 {
@@ -29,13 +30,32 @@ namespace Api.Controllers
         {
             return await _context.Accounts.ToListAsync();
         }
+/*        [HttpGet("search")]
+        public async Task<ActionResult> GetLisSearch(int page, int count, string search)
+        {
+            var list = _context.Accounts.Where(p=>p.Name.Contains())
+        }*/
+
         [HttpGet("pagination")]
         public async Task<ActionResult> GetPagination(int page, int count)
         {
             var list = await _context.Accounts.ToListAsync();
+            try
+            {
+                return PaginationAccount(page, count, list);
+            }
+            catch (AppException ex)
+            {
+
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+        private ActionResult PaginationAccount(int page, int count, List<Account> list)
+        {
+            page -= 1;
             if (count * page > list.Count)
             {
-                return Ok("Overpage");
+                throw new AppException("Overpage");
             }
             List<Account> accounts = new List<Account>();
             for (int i = count * page; i < count * page + count; i++)
@@ -46,8 +66,15 @@ namespace Api.Controllers
                 }
                 accounts.Add(list[i]);
             }
-            return Ok(accounts.Select(p => new { p.Id, p.Name , p.Level, p.OnReady, p.Ratings }).ToList());
-        }
+            return Ok(new
+            {
+                amount = list.Count(),
+                page = Math.Ceiling(Decimal.Parse(list.Count.ToString()) /
+                    Decimal.Parse(count.ToString())) + 1,
+                list = accounts.Select(p =>
+                new { p.Id, p.Name, p.Level, p.OnReady, p.Ratings }).ToList()
+            });
+    }
 
         // GET: api/Accounts/5
         [HttpGet("{id}")]
@@ -95,6 +122,30 @@ namespace Api.Controllers
             account.LevelId = accountEditModel.LevelId;
             account.FormOnWorkId = accountEditModel.FormOnWorkId;
             account.OnReady = account.OnReady;
+
+            var arrSkillsRemove = _context.FreelancerSkills.Where(p => p.FreelancerId == account.Id).ToArray();
+            var arrServicesRemove = _context.FreelancerServices.Where(p => p.FreelancerId == account.Id).ToArray();
+
+            _context.FreelancerServices.RemoveRange(arrServicesRemove);
+            _context.FreelancerSkills.RemoveRange(arrSkillsRemove);
+            await _context.SaveChangesAsync();
+
+            foreach (var item in accountEditModel.Skills)
+            {
+                _context.FreelancerSkills.Add(new FreelancerSkill()
+                {
+                    FreelancerId = account.Id,
+                    SkilId = item.Id
+                });
+            }          
+            foreach (var item in accountEditModel.Services)
+            {
+                _context.FreelancerServices.Add(new FreelancerService()
+                {
+                    FreelancerId = account.Id,
+                    ServiceId = item.Id
+                });
+            }
 
              _context.Entry(account).State = EntityState.Modified;
             try

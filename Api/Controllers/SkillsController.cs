@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Api.Models;
 using Microsoft.AspNetCore.Authorization;
+using Api.Enities;
 
 namespace Api.Controllers
 {
@@ -24,14 +25,14 @@ namespace Api.Controllers
 
         // GET: api/Skills
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Skill>>> GetSkills()
+        public async Task<ActionResult<IEnumerable<ResponseIdName>>> GetSkills()
         {
-            return await _context.Skills.ToListAsync();
+            return await _context.Skills.Select(p=> new ResponseIdName(p)).ToListAsync();
         }
 
         // GET: api/Skills/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Skill>> GetSkill(int id)
+        public async Task<ActionResult<ResponseIdName>> GetSkill(int id)
         {
             var skill = await _context.Skills.FindAsync(id);
 
@@ -40,7 +41,7 @@ namespace Api.Controllers
                 return NotFound();
             }
 
-            return skill;
+            return new ResponseIdName(skill);
         }
 
         // PUT: api/Skills/5
