@@ -121,7 +121,7 @@ namespace Api.Controllers
             account.Speccializeid = accountEditModel.Speccializeid;
             account.LevelId = accountEditModel.LevelId;
             account.FormOnWorkId = accountEditModel.FormOnWorkId;
-            account.OnReady = account.OnReady;
+            account.OnReady = accountEditModel.OnReady;
 
             var arrSkillsRemove = _context.FreelancerSkills.Where(p => p.FreelancerId == account.Id).ToArray();
             var arrServicesRemove = _context.FreelancerServices.Where(p => p.FreelancerId == account.Id).ToArray();
@@ -146,7 +146,6 @@ namespace Api.Controllers
                     ServiceId = item.Id
                 });
             }
-
              _context.Entry(account).State = EntityState.Modified;
             try
             {
@@ -163,8 +162,7 @@ namespace Api.Controllers
                     throw;
                 }
             }
-
-            return NoContent();
+            return Ok();
         }
 
         // POST: api/Accounts

@@ -15,6 +15,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Api.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class ImagesController : ControllerBase
@@ -53,9 +54,9 @@ namespace Api.Controllers
             }
 
         }
-
+        [AllowAnonymous]
         [HttpPost("avatars")]
-        public async Task<IActionResult> PostAvatar([FromBody] ImageModel imageModel)
+        public IActionResult PostAvatar([FromBody] ImageModel imageModel)
         {
             String jwt = Request.Headers["Authorization"];
             jwt = jwt.Substring(7);
@@ -66,7 +67,7 @@ namespace Api.Controllers
             var tokenS = jsonToken as JwtSecurityToken;
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
-            var account = await _context.Accounts.SingleOrDefaultAsync(p => p.Email == email);
+            var account = _context.Accounts.SingleOrDefault(p => p.Email == email);
             if(account == null)
             {
                 return BadRequest();
@@ -87,14 +88,16 @@ namespace Api.Controllers
 
             string newURL = "\\Avatars\\" + account.Id+"_"+ imageModel.Name;
 
-            using (FileStream fs = System.IO.File.Create(newURL))
+            using (FileStream fs = System.IO.File.Create(rootpath+newURL))
             {
-                System.IO.File.WriteAllBytes(rootpath+imageModel.Name, Convert.FromBase64String(imageModel.ImageBase64));
+                fs.Close();
+                System.IO.File.WriteAllBytes(rootpath + newURL, Convert.FromBase64String(imageModel.ImageBase64));
+
             }
             account.AvatarUrl = newURL;
             _context.Entry(account).State = EntityState.Modified;
             _context.SaveChanges();
-            return Ok("Successful");
+            return Ok(new {message = "Successful", url=newURL });
         }
 
         [HttpPost("images")]
@@ -128,14 +131,15 @@ namespace Api.Controllers
 
             string newURL = "\\Images\\" + account.Id + "_"
                 + cp.Name.Trim().Substring(0, 10) + "_" + imageCPEdit.ImageName;
-            using (FileStream fs = System.IO.File.Create(newURL))
+            using (FileStream fs = System.IO.File.Create(rootpath+newURL))
             {
-                System.IO.File.WriteAllBytes(rootpath+imageCPEdit.ImageName, Convert.FromBase64String(imageCPEdit.ImageBase64));
+                fs.Close();
+                System.IO.File.WriteAllBytes(rootpath+newURL, Convert.FromBase64String(imageCPEdit.ImageBase64));
             }
             cp.ImageUrl= newURL;
             _context.Entry(cp).State = EntityState.Modified;
             _context.SaveChanges();
-            return Ok("Successful");
+            return Ok(new { message = "Successful", url = newURL });
         }
     }
 }

@@ -255,7 +255,7 @@ namespace Api.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok();
         }
 
         // POST: api/Jobs
@@ -308,7 +308,7 @@ namespace Api.Controllers
                 });
             }
             await _context.SaveChangesAsync();
-            return CreatedAtAction("GetJob", new { id = job.Id }, job);
+            return Ok(job);
         }
 
         // DELETE: api/Jobs/5

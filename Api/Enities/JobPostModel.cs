@@ -17,7 +17,7 @@ namespace Api.Enities
         public DateTime Deadline { get; set; }
         public int Floorprice { get; set; }
         public int Cellingprice { get; set; }
-        public int IsPrivate { get; set; }
+        public bool IsPrivate { get; set; }
         public int SpecialtyId { get; set; }
         public int ServiceId { get; set; }
         public string ProvinceId { get; set; }

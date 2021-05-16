@@ -72,7 +72,7 @@ namespace Api.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok();
         }
 
         // POST: api/FreelancerServices

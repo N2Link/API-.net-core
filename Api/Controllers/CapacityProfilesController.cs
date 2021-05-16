@@ -128,7 +128,7 @@ namespace Api.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok();
         }
 
         // POST: api/CapacityProfiles
@@ -196,7 +196,7 @@ namespace Api.Controllers
                 }
             }
 
-            return CreatedAtAction("GetCapacityProfile", new { id = capacityProfile.FreelancerId }, capacityProfile);
+            return Ok(capacityProfile);
         }
 
         // DELETE: api/CapacityProfiles/5

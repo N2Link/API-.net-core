@@ -11,6 +11,6 @@ namespace Api.Models
         public int SkilId { get; set; }
 
         public virtual Account Freelancer { get; set; }
-        public virtual Skill Skil { get; set; }
+        public virtual Skill Skill { get; set; }
     }
 }

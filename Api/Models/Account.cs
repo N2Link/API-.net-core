@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 #nullable disable
 
@@ -22,7 +23,9 @@ namespace Api.Models
 
         public int Id { get; set; }
         public string Name { get; set; }
+        [JsonIgnore]
         public byte[] PasswordHash { get; set; }
+        [JsonIgnore]
         public byte[] PasswordSalt { get; set; }
         public string Phone { get; set; }
         public string Email { get; set; }

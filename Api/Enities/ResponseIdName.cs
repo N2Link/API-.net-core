@@ -10,6 +10,11 @@ namespace Api.Enities
     {
         public int Id { get; set; }
         public string Name { get; set; }
+        public ResponseIdName(int id, string name)
+        {
+            Id = id;
+            Name = name;
+        }
         public ResponseIdName(Api.Models.Service service)
         {
             this.Id = service.Id;

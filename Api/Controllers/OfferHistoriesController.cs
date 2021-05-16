@@ -155,7 +155,7 @@ namespace Api.Controllers
                 }
                 await _context.SaveChangesAsync();
             }
-            return NoContent();
+            return Ok();
         }
 
         // POST: api/OfferHistories
@@ -217,7 +217,7 @@ namespace Api.Controllers
                     throw;
                 }
             }
-            return CreatedAtAction("GetOfferHistory", new { id = offerHistory.JobId }, offerHistory);
+            return Ok(offerHistory);
         }
 
         // DELETE: api/OfferHistories/5

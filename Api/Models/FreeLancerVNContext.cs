@@ -193,7 +193,7 @@ namespace Api.Models
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_FreelancerSkill_User");
 
-                entity.HasOne(d => d.Skil)
+                entity.HasOne(d => d.Skill)
                     .WithMany(p => p.FreelancerSkills)
                     .HasForeignKey(d => d.SkilId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
