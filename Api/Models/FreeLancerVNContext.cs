@@ -233,6 +233,8 @@ namespace Api.Models
 
                 entity.Property(e => e.SpecialtyId).HasColumnName("SpecialtyID");
 
+                entity.Property(e => e.Status).HasMaxLength(50);
+
                 entity.Property(e => e.TypeId).HasColumnName("TypeID");
 
                 entity.Property(e => e.WorkatId).HasColumnName("WorkatID");
@@ -437,6 +439,8 @@ namespace Api.Models
                 entity.Property(e => e.Id)
                     .ValueGeneratedNever()
                     .HasColumnName("ID");
+
+                entity.Property(e => e.Comment).HasMaxLength(500);
 
                 entity.Property(e => e.FreelancerId).HasColumnName("FreelancerID");
 

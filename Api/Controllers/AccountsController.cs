@@ -26,9 +26,20 @@ namespace Api.Controllers
 
         // GET: api/Accounts
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Account>>> GetAccounts()
+        public async Task<ActionResult<IEnumerable<AccountResponseModel>>> GetAccounts()
         {
-            return await _context.Accounts.ToListAsync();
+            return await _context.Accounts
+                .Include(p => p.JobRenters)
+                .Include(p => p.JobFreelancers)
+                .Include(p => p.FreelancerSkills)
+                .Include(p => p.FreelancerServices)
+                .Include(p => p.Speccialize)
+                .Include(p => p.Role)
+                .Include(p => p.Ratings)
+                .Include(p => p.Level)
+                .Include(p => p.FormOnWork)
+                .Include(p => p.OfferHistories)
+                .Include(p => p.CapacityProfiles).Select(p=> new AccountResponseModel(p, true)).ToListAsync();
         }
 /*        [HttpGet("search")]
         public async Task<ActionResult> GetLisSearch(int page, int count, string search)
@@ -39,7 +50,16 @@ namespace Api.Controllers
         [HttpGet("pagination")]
         public async Task<ActionResult> GetPagination(int page, int count)
         {
-            var list = await _context.Accounts.ToListAsync();
+            var list = await _context.Accounts
+                .Include(p=>p.JobFreelancers)
+                .Include(p=>p.FreelancerSkills)
+                .Include(p=>p.FreelancerServices)
+                .Include(p=>p.Speccialize)
+                .Include(p=>p.Role)
+                .Include(p=>p.Ratings)
+                .Include(p=>p.Level)
+                .Include(p=>p.FormOnWork)
+                .ToListAsync();
             try
             {
                 return PaginationAccount(page, count, list);
@@ -71,23 +91,34 @@ namespace Api.Controllers
                 amount = list.Count(),
                 page = Math.Ceiling(Decimal.Parse(list.Count.ToString()) /
                     Decimal.Parse(count.ToString())) + 1,
-                list = accounts.Select(p =>
-                new { p.Id, p.Name, p.Level, p.OnReady, p.Ratings }).ToList()
+                list = accounts.Select(p =>new AccountResponseModel(p,true)).ToList()
             });
     }
 
         // GET: api/Accounts/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Account>> GetAccount(int id)
+        public async Task<ActionResult<AccountResponseModel>> GetAccount(int id)
         {
-            var account = await _context.Accounts.FindAsync(id);
+            var account = await _context.Accounts
+                .Include(p => p.JobRenters)
+                .Include(p => p.JobFreelancers)
+                .Include(p => p.FreelancerSkills)
+                .Include(p => p.FreelancerServices)
+                .Include(p => p.Speccialize)
+                .Include(p => p.Role)
+                .Include(p => p.Ratings)
+                .Include(p => p.Level)
+                .Include(p => p.FormOnWork)
+                .Include(p => p.OfferHistories)
+                .Include(p => p.CapacityProfiles)
+                .SingleOrDefaultAsync(p => p.Id == id);
 
             if (account == null)
             {
                 return NotFound();
             }
 
-            return account;
+            return new AccountResponseModel(account,true);
         }
 
         // PUT: api/Accounts/5
@@ -198,7 +229,7 @@ namespace Api.Controllers
             return _context.Accounts.Any(e => e.Id == id);
         }
         [HttpGet("fromtoken")]
-        public ActionResult<Account> GetUserFromToken()
+        public ActionResult<AccountResponseModel> GetUserFromToken()
         {
             String jwt = Request.Headers["Authorization"];
             jwt = jwt.Substring(7);
@@ -209,12 +240,23 @@ namespace Api.Controllers
             var tokenS = jsonToken as JwtSecurityToken;
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
-            var account = _context.Accounts.SingleOrDefault(p => p.Email == email);
+            var account = _context.Accounts
+                .Include(p => p.JobRenters)
+                .Include(p => p.JobFreelancers)
+                .Include(p => p.FreelancerSkills)
+                .Include(p => p.FreelancerServices)
+                .Include(p => p.Speccialize)
+                .Include(p => p.Role)
+                .Include(p => p.Ratings)
+                .Include(p => p.Level)
+                .Include(p => p.FormOnWork)
+                .Include(p => p.OfferHistories)
+                .Include(p => p.CapacityProfiles).SingleOrDefault(p => p.Email == email);
             if(account == null)
             {
                 return BadRequest();
             }
-            return account;
+            return new AccountResponseModel(account, false);
         }
     }
 }

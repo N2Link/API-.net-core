@@ -156,6 +156,7 @@ namespace Api.Controllers
 
             CapacityProfile capacityProfile = new CapacityProfile()
             {
+                FreelancerId = account.Id,
                 Name = cProfilePostModel.Name,
                 Description = cProfilePostModel.Description,
                 Urlweb = cProfilePostModel.Urlweb,
@@ -168,6 +169,7 @@ namespace Api.Controllers
             string newURL = "\\Images\\"+ capacityProfile.Id  + "_" + cProfilePostModel.ImageName;
             using (FileStream fs = System.IO.File.Create(imageUrl + newURL))
             {
+                fs.Close();
                 System.IO.File.WriteAllBytes(imageUrl + newURL, Convert.FromBase64String(cProfilePostModel.ImageBase64));
             }
             capacityProfile.ImageUrl = newURL;

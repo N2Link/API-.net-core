@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-#nullable disable
-
-namespace Api.Models
+namespace Api.Enities
 {
-    public partial class Rating
+    public class RatingPost
     {
-        public int Id { get; set; }
         public int JobId { get; set; }
         public int FreelancerId { get; set; }
         public int Quality { get; set; }
@@ -16,8 +15,5 @@ namespace Api.Models
         public int Time { get; set; }
         public int Profession { get; set; }
         public string Comment { get; set; }
-
-        public virtual Account Freelancer { get; set; }
-        public virtual Job Job { get; set; }
     }
 }

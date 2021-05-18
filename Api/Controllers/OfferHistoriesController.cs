@@ -119,7 +119,9 @@ namespace Api.Controllers
             {
                 return BadRequest();
             }
+            job.Status = "In progress";
             _context.Entry(offerHistory).State = EntityState.Modified;
+            _context.Entry(job).State = EntityState.Modified;
             try
             {
                 await _context.SaveChangesAsync();

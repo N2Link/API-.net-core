@@ -36,7 +36,7 @@ namespace Api.Controllers
         public async Task<ActionResult<IEnumerable<JobResponseModel>>> GetListSerch
             (int page, int count,
             string search, int? specialtyId, int? serviceId, int? formId, int? payId, int? typeId,
-            long floorPrice, long cellingPrice, string? provinceId)
+            string? provinceId, long floorPrice =0, long cellingPrice= Int64.MaxValue)
         {
             /*            String jwt = Request.Headers["Authorization"];
                         jwt = jwt.Substring(7);
@@ -56,7 +56,7 @@ namespace Api.Controllers
                 (serviceId == null || p.ServiceId == serviceId) &&
                 (formId == null || p.FormId == formId) &&
                 (payId == null || p.PayformId == payId) &&
-                //(typeId==null||p.TypeId== typeId)&&
+                (typeId==null||p.TypeId== typeId)&&
                 (provinceId == null || p.ProvinceId == provinceId) &&
                 p.Floorprice >= floorPrice && p.Cellingprice <= cellingPrice
                 ).ToList();
@@ -110,32 +110,34 @@ namespace Api.Controllers
                 }
                 jobs.Add(list[i]);
             }
-            return Ok(
-                new { 
-                    amount = list.Count(),
-                    page = Math.Ceiling(Decimal.Parse(list.Count.ToString())/Decimal.Parse(count.ToString()))+1,
-                    list= jobs.Select(p => new JobResponseModel()
-                    {
-                        Id = p.Id,
-                        Name = p.Name,
-                        Renter = new IUserService.UserEntitis(p.Renter),
-                        Freelancer = p.Freelancer != null ? new IUserService.UserEntitis(p.Freelancer) : null,
-                        Deadline = p.Deadline,
-                        SpecialtyService = new SpecialtyService()
-                        {
-                            Service = new Models.Service() { Id = p.S.ServiceId, Name = p.S.Service.Name },
-                            Specialty = new Specialty() { Id = p.S.SpecialtyId, Name = p.S.Specialty.Name }
-                        },
-                        Cellingprice = p.Cellingprice,
-                        Details = p.Details,
-                        Floorprice = p.Floorprice,
-                        Payform = new Payform() { Id = p.Payform.Id, Name = p.Payform.Name },
-                        TypeOfWork = new TypeOfWork() { Id = p.Type.Id, Name = p.Type.Name },
-                        FormOfWork = new FormOfWork() { Id = p.Form.Id, Name = p.Type.Name },
-                        Skills = p.JobSkills
+            var listTemp = jobs.Select(p => new JobResponseModel()
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Renter = new IUserService.UserEntitis(p.Renter),
+                Freelancer = p.Freelancer != null ? new IUserService.UserEntitis(p.Freelancer) : null,
+                Deadline = p.Deadline,
+                SpecialtyService = new SpecialtyService()
+                {
+                    Service = new Models.Service() { Id = p.S.ServiceId, Name = p.S.Service.Name },
+                    Specialty = new Specialty() { Id = p.S.SpecialtyId, Name = p.S.Specialty.Name }
+                },
+                Cellingprice = p.Cellingprice,
+                Details = p.Details,
+                Floorprice = p.Floorprice,
+                Payform = new Payform() { Id = p.Payform.Id, Name = p.Payform.Name },
+                TypeOfWork = new TypeOfWork() { Id = p.Type.Id, Name = p.Type.Name },
+                FormOfWork = new FormOfWork() { Id = p.Form.Id, Name = p.Type.Name },
+                Skills = p.JobSkills
                      .Select(p => new Skill() { Id = p.Skill.Id, Name = p.Skill.Name }).ToList(),
-                    }).ToList()
-                    });
+            }).ToList();
+            return Ok(
+                new
+                {
+                    amount = list.Count(),
+                    page = list.Count>0? Math.Ceiling(Decimal.Parse(list.Count.ToString()) / Decimal.Parse(count.ToString())) + 1:0,
+                    Jobs = listTemp
+                }); ;
         }
 
         // GET: api/Jobs
@@ -257,6 +259,64 @@ namespace Api.Controllers
 
             return Ok();
         }
+        [HttpPut("done/{id}")]
+        public async Task<ActionResult> DoneJob(int id)
+        {
+            var job = _context.Jobs.Find(id);
+            if(job == null)
+            {
+                return BadRequest(new { message = "Job dont exits" });
+            }
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+
+            var renter = await _context.Accounts
+                .SingleOrDefaultAsync(p => p.Email == email);
+            if(job.RenterId!= renter.Id)
+            {
+                return BadRequest(new { message = "You dont have this permission" });
+            }
+            job.Status = "Done";
+            _context.Entry(job).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return Ok();
+        }      
+        [HttpPut("cancel/{id}")]
+        public async Task<ActionResult> CancelJob(int id)
+        {
+            var job = _context.Jobs.Find(id);
+            if(job == null)
+            {
+                return BadRequest(new { message = "Job dont exits" });
+            }
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+
+            var renter = await _context.Accounts
+                .SingleOrDefaultAsync(p => p.Email == email);
+            if(job.RenterId!= renter.Id)
+            {
+                return BadRequest(new { message = "You dont have this permission" });
+            }
+            job.Status = "Cancelled";
+            _context.Entry(job).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
 
         // POST: api/Jobs
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
@@ -296,6 +356,7 @@ namespace Api.Controllers
                 SpecialtyId = jobPostModel.SpecialtyId,
                 ProvinceId = jobPostModel.ProvinceId,
                 ServiceId = jobPostModel.ServiceId,
+                Status = "Waiting",
             };
             _context.Jobs.Add(job);
             await _context.SaveChangesAsync();
