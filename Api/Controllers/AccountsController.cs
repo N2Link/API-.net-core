@@ -31,13 +31,13 @@ namespace Api.Controllers
             return await _context.Accounts
                 .Include(p => p.JobRenters)
                 .Include(p => p.JobFreelancers)
-                .Include(p => p.FreelancerSkills)
-                .Include(p => p.FreelancerServices)
-                .Include(p => p.Speccialize)
+                .Include(p => p.FreelancerSkills).ThenInclude(p=>p.Skill)
+                .Include(p => p.FreelancerServices).ThenInclude(p=>p.Service)
+                .Include(p => p.Specialty)
                 .Include(p => p.Role)
                 .Include(p => p.Ratings)
                 .Include(p => p.Level)
-                .Include(p => p.FormOnWork)
+                .Include(p => p.FormOfWork)
                 .Include(p => p.OfferHistories)
                 .Include(p => p.CapacityProfiles).Select(p=> new AccountResponseModel(p, true)).ToListAsync();
         }
@@ -52,13 +52,13 @@ namespace Api.Controllers
         {
             var list = await _context.Accounts
                 .Include(p=>p.JobFreelancers)
-                .Include(p=>p.FreelancerSkills)
-                .Include(p=>p.FreelancerServices)
-                .Include(p=>p.Speccialize)
+                .Include(p => p.FreelancerSkills).ThenInclude(p => p.Skill)
+                .Include(p => p.FreelancerServices).ThenInclude(p => p.Service)
+                .Include(p=>p.Specialty)
                 .Include(p=>p.Role)
                 .Include(p=>p.Ratings)
                 .Include(p=>p.Level)
-                .Include(p=>p.FormOnWork)
+                .Include(p=>p.FormOfWork)
                 .ToListAsync();
             try
             {
@@ -101,16 +101,41 @@ namespace Api.Controllers
         {
             var account = await _context.Accounts
                 .Include(p => p.JobRenters)
+                .ThenInclude(p => p.S).ThenInclude(p => p.Service)
+                .Include(p => p.JobRenters)
+                .ThenInclude(p => p.S).ThenInclude(p => p.Specialty)
+                .Include(p => p.JobRenters)
+                .ThenInclude(p => p.Form)
+                .Include(p => p.JobRenters)
+                .ThenInclude(p => p.Type)
+                .Include(p => p.JobRenters)
+                .ThenInclude(p => p.Payform)
+                .Include(p => p.JobRenters)
+                .ThenInclude(p => p.JobSkills).ThenInclude(p => p.Skill)
+
                 .Include(p => p.JobFreelancers)
-                .Include(p => p.FreelancerSkills)
-                .Include(p => p.FreelancerServices)
-                .Include(p => p.Speccialize)
+                .ThenInclude(p => p.S).ThenInclude(p => p.Service)
+                .Include(p => p.JobFreelancers)
+                .ThenInclude(p => p.S).ThenInclude(p => p.Specialty)
+                .Include(p => p.JobFreelancers)
+                .ThenInclude(p => p.Form)
+                .Include(p => p.JobFreelancers)
+                .ThenInclude(p => p.Type)
+                .Include(p => p.JobFreelancers)
+                .ThenInclude(p => p.Payform)
+                .Include(p => p.JobFreelancers)
+                .ThenInclude(p => p.JobSkills).ThenInclude(p => p.Skill)
+
+                .Include(p => p.FreelancerSkills).ThenInclude(p => p.Skill)
+                .Include(p => p.FreelancerServices).ThenInclude(p => p.Service)
+                .Include(p => p.Specialty)
                 .Include(p => p.Role)
                 .Include(p => p.Ratings)
                 .Include(p => p.Level)
-                .Include(p => p.FormOnWork)
+                .Include(p => p.FormOfWork)
                 .Include(p => p.OfferHistories)
                 .Include(p => p.CapacityProfiles)
+                .ThenInclude(p => p.ProfileServices).ThenInclude(p => p.Service)
                 .SingleOrDefaultAsync(p => p.Id == id);
 
             if (account == null)
@@ -149,9 +174,9 @@ namespace Api.Controllers
             account.Tile = accountEditModel.Tile;   
             account.Description = accountEditModel.Description;
             account.Website = accountEditModel.Website;
-            account.Speccializeid = accountEditModel.Speccializeid;
+            account.SpecialtyId = accountEditModel.SpecialtyId;
             account.LevelId = accountEditModel.LevelId;
-            account.FormOnWorkId = accountEditModel.FormOnWorkId;
+            account.FormOfWorkId = accountEditModel.FormOfWorkId;
             account.OnReady = accountEditModel.OnReady;
 
             var arrSkillsRemove = _context.FreelancerSkills.Where(p => p.FreelancerId == account.Id).ToArray();
@@ -160,13 +185,12 @@ namespace Api.Controllers
             _context.FreelancerServices.RemoveRange(arrServicesRemove);
             _context.FreelancerSkills.RemoveRange(arrSkillsRemove);
             await _context.SaveChangesAsync();
-
             foreach (var item in accountEditModel.Skills)
             {
                 _context.FreelancerSkills.Add(new FreelancerSkill()
                 {
                     FreelancerId = account.Id,
-                    SkilId = item.Id
+                    SkillId = item.Id
                 });
             }          
             foreach (var item in accountEditModel.Services)
@@ -242,16 +266,42 @@ namespace Api.Controllers
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             var account = _context.Accounts
                 .Include(p => p.JobRenters)
+                .ThenInclude(p=>p.S).ThenInclude(p=>p.Service) 
+                .Include(p => p.JobRenters)
+                .ThenInclude(p=>p.S).ThenInclude(p=>p.Specialty)  
+                .Include(p => p.JobRenters)
+                .ThenInclude(p=>p.Form)
+                .Include(p => p.JobRenters)
+                .ThenInclude(p=>p.Type)
+                .Include(p => p.JobRenters)
+                .ThenInclude(p=>p.Payform)
+                .Include(p => p.JobRenters)
+                .ThenInclude(p => p.JobSkills).ThenInclude(p => p.Skill) 
+                
                 .Include(p => p.JobFreelancers)
-                .Include(p => p.FreelancerSkills)
-                .Include(p => p.FreelancerServices)
-                .Include(p => p.Speccialize)
+                .ThenInclude(p=>p.S).ThenInclude(p=>p.Service) 
+                .Include(p => p.JobFreelancers)
+                .ThenInclude(p=>p.S).ThenInclude(p=>p.Specialty)  
+                .Include(p => p.JobFreelancers)
+                .ThenInclude(p=>p.Form)
+                .Include(p => p.JobFreelancers)
+                .ThenInclude(p=>p.Type)
+                .Include(p => p.JobFreelancers)
+                .ThenInclude(p=>p.Payform)
+                .Include(p => p.JobFreelancers)
+                .ThenInclude(p => p.JobSkills).ThenInclude(p => p.Skill)
+
+                .Include(p => p.FreelancerSkills).ThenInclude(p => p.Skill)
+                .Include(p => p.FreelancerServices).ThenInclude(p => p.Service)
+                .Include(p => p.Specialty)
                 .Include(p => p.Role)
                 .Include(p => p.Ratings)
                 .Include(p => p.Level)
-                .Include(p => p.FormOnWork)
+                .Include(p => p.FormOfWork)
                 .Include(p => p.OfferHistories)
-                .Include(p => p.CapacityProfiles).SingleOrDefault(p => p.Email == email);
+                .Include(p => p.CapacityProfiles)
+                .ThenInclude(p => p.ProfileServices).ThenInclude(p => p.Service)
+                .SingleOrDefault(p => p.Email == email);
             if(account == null)
             {
                 return BadRequest();

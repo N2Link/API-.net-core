@@ -68,7 +68,7 @@ namespace Api.Models
                     .IsRequired()
                     .HasMaxLength(100);
 
-                entity.Property(e => e.FormOnWorkId).HasColumnName("FormOnWorkID");
+                entity.Property(e => e.FormOfWorkId).HasColumnName("FormOfWorkID");
 
                 entity.Property(e => e.LevelId).HasColumnName("LevelID");
 
@@ -94,9 +94,9 @@ namespace Api.Models
 
                 entity.Property(e => e.Website).HasMaxLength(30);
 
-                entity.HasOne(d => d.FormOnWork)
+                entity.HasOne(d => d.FormOfWork)
                     .WithMany(p => p.Accounts)
-                    .HasForeignKey(d => d.FormOnWorkId)
+                    .HasForeignKey(d => d.FormOfWorkId)
                     .HasConstraintName("FK_User_FormOfWork");
 
                 entity.HasOne(d => d.Level)
@@ -110,9 +110,9 @@ namespace Api.Models
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_User_Role");
 
-                entity.HasOne(d => d.Speccialize)
+                entity.HasOne(d => d.Specialty)
                     .WithMany(p => p.Accounts)
-                    .HasForeignKey(d => d.Speccializeid)
+                    .HasForeignKey(d => d.SpecialtyId)
                     .HasConstraintName("FK_Account_Specialty");
             });
 
@@ -179,13 +179,13 @@ namespace Api.Models
 
             modelBuilder.Entity<FreelancerSkill>(entity =>
             {
-                entity.HasKey(e => new { e.FreelancerId, e.SkilId });
+                entity.HasKey(e => new { e.FreelancerId, e.SkillId });
 
                 entity.ToTable("FreelancerSkill");
 
                 entity.Property(e => e.FreelancerId).HasColumnName("FreelancerID");
 
-                entity.Property(e => e.SkilId).HasColumnName("SkilID");
+                entity.Property(e => e.SkillId).HasColumnName("SkillID");
 
                 entity.HasOne(d => d.Freelancer)
                     .WithMany(p => p.FreelancerSkills)
@@ -195,7 +195,7 @@ namespace Api.Models
 
                 entity.HasOne(d => d.Skill)
                     .WithMany(p => p.FreelancerSkills)
-                    .HasForeignKey(d => d.SkilId)
+                    .HasForeignKey(d => d.SkillId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_FreelancerSkill_Skill");
             });

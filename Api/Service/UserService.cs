@@ -38,10 +38,10 @@ namespace Api.Service
                 {
                     account.Role.Accounts = null;
                 }    
-                if (account.FormOnWork != null)
+                if (account.FormOfWork != null)
                 {
-                    account.FormOnWork.Accounts = null;
-                    account.FormOnWork.Jobs = null;
+                    account.FormOfWork.Accounts = null;
+                    account.FormOfWork.Jobs = null;
 
                 }  
                 if (account.Level != null)
@@ -49,10 +49,10 @@ namespace Api.Service
                     account.Level.Accounts = null;
 
                 }
-                if (account.Speccialize!=null)
+                if (account.Specialty!=null)
                 {
-                    account.Speccialize.Accounts = null;
-                    account.Speccialize.SpecialtyServices = null;
+                    account.Specialty.Accounts = null;
+                    account.Specialty.SpecialtyServices = null;
                 }
                 this.account = account;
             }
@@ -86,8 +86,8 @@ namespace Api.Service
         public IUserService.UserEntitis Auth(string email, string password)
         {
             var list = context.Accounts.Include(p => p.Role)
-                .Include(p=>p.FormOnWork).Include(p=>p.Level)
-                .Include(p=>p.Speccialize).ToList();
+                .Include(p=>p.FormOfWork).Include(p=>p.Level)
+                .Include(p=>p.Specialty).ToList();
             Account account = list.SingleOrDefault(p => p.Email == email );
             if (account == null)
             {

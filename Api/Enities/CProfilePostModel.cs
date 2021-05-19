@@ -12,6 +12,6 @@ namespace Api.Enities
         public string Description { get; set; }
         public string ImageName { get; set; }
         public string ImageBase64 { get; set; }
-        public List<int> ServiceIds { get; set; }
+        public List<ResponseIdName> Services { get; set; }
     }
 }

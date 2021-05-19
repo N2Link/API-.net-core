@@ -81,6 +81,7 @@ namespace Api.Controllers
             string newURL = "\\Images\\" + capacityProfile.Id +"_"+ cpEditModel.ImageName;
             using (FileStream fs = System.IO.File.Create(imageUrl + newURL))
             {
+                fs.Close();
                 System.IO.File.WriteAllBytes(imageUrl + newURL, Convert.FromBase64String(cpEditModel.ImageBase64));
             }
             if (capacityProfile.ImageUrl != null)
@@ -101,12 +102,12 @@ namespace Api.Controllers
             _context.ProfileServices.RemoveRange(capacityProfile.ProfileServices.ToArray());
             await _context.SaveChangesAsync();
 
-            foreach (var item in cpEditModel.ServiceIds)
+            foreach (var item in cpEditModel.Services)
             {
                 _context.ProfileServices.Add(new ProfileService
                 {
                     Cpid = id,
-                    ServiceId = item,
+                    ServiceId = item.Id,
                 });
             }
 
@@ -135,7 +136,7 @@ namespace Api.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPost]
-        public async Task<ActionResult<CProfilePostModel>> PostCapacityProfile(CProfilePostModel cProfilePostModel)
+        public async Task<ActionResult<CapacityProfileResponse>> PostCapacityProfile(CProfilePostModel cProfilePostModel)
         {
             String jwt = Request.Headers["Authorization"];
             jwt = jwt.Substring(7);
@@ -146,13 +147,11 @@ namespace Api.Controllers
             var tokenS = jsonToken as JwtSecurityToken;
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
-            var account = _context.Accounts.SingleOrDefaultAsync(p=>p.Email == email);
+            Account account = await _context.Accounts.SingleOrDefaultAsync(p=>p.Email == email);
             if (account == null)
             {
                 return BadRequest();
             }
-
-
 
             CapacityProfile capacityProfile = new CapacityProfile()
             {
@@ -162,6 +161,7 @@ namespace Api.Controllers
                 Urlweb = cProfilePostModel.Urlweb,
             };
             _context.CapacityProfiles.Add(capacityProfile);
+
             await _context.SaveChangesAsync();
 
             //create image
@@ -174,12 +174,12 @@ namespace Api.Controllers
             }
             capacityProfile.ImageUrl = newURL;
 
-            foreach (var item in cProfilePostModel.ServiceIds)
+            foreach (var item in cProfilePostModel.Services)
             {
                 _context.ProfileServices.Add(new ProfileService
                 {
                     Cpid = capacityProfile.Id,
-                    ServiceId = item,
+                    ServiceId = item.Id,
                 });
             }
             try
@@ -198,7 +198,7 @@ namespace Api.Controllers
                 }
             }
 
-            return Ok(capacityProfile);
+            return Ok(new CapacityProfileResponse(capacityProfile));
         }
 
         // DELETE: api/CapacityProfiles/5

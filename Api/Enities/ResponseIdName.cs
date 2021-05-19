@@ -20,10 +20,15 @@ namespace Api.Enities
             this.Id = service.Id;
             this.Name = service.Name;
         }
-        public ResponseIdName(Skill skil)
+        public ResponseIdName(Skill skill)
         {
-            this.Id = skil.Id;
-            this.Name = skil.Name;
+            this.Id = skill.Id;
+            this.Name = skill.Name;
+        }  
+        public ResponseIdName(Account account)
+        {
+            this.Id = account.Id;
+            this.Name = account.Name;
         }
         public ResponseIdName(Specialty specialty)
         {

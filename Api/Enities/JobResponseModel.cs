@@ -15,34 +15,38 @@ namespace Api.Enities
             Id = job.Id;
             Name = job.Name;
             Deadline = job.Deadline;
-            SpecialtyService = new SpecialtyService()
-            {
-                Service = new Models.Service() { Id = job.S.ServiceId, Name = job.S.Service.Name },
-                Specialty = new Specialty() { Id = job.S.SpecialtyId, Name = job.S.Specialty.Name }
-            };
+            Specialty = new ResponseIdName(job.S.Specialty);
+            Service = new ResponseIdName(job.S.Service);
+            Renter = new ResponseIdName( job.RenterId, job.Renter.Name );            
+            Freelancer = job.Freelancer!=null? new ResponseIdName( job.Freelancer.Id, job.Freelancer.Name ):null;
             Cellingprice = job.Cellingprice;
             Details = job.Details;
             Floorprice = job.Floorprice;
-            Payform = new Payform() { Id = job.Payform.Id, Name = job.Payform.Name };
-            TypeOfWork = new TypeOfWork() { Id = job.Type.Id, Name = job.Type.Name };
-            FormOfWork = new FormOfWork() { Id = job.Form.Id, Name = job.Type.Name };
+            Payform = new ResponseIdName(job.Payform);
+            FormOfWork = new ResponseIdName(job.Form);
+            TypeOfWork = new ResponseIdName(job.Type);
+            Province = job.Province !=null? new ProvinceResponse(job.Province):null;
+            Status = job.Status;
             Skills = job.JobSkills
-            .Select(p => new Skill() { Id = p.Skill.Id, Name = p.Skill.Name }).ToList();
+            .Select(p => new ResponseIdName(p.Skill)).ToList();
         } 
         public int Id { get; set; }
         public string Name { get; set; }
         public DateTime Deadline { get; set; }
         public string Details { get; set; }
-        public IUserService.UserEntitis Renter { get; set; }
-        public IUserService.UserEntitis Freelancer { get; set; }
-        public ICollection<Skill> Skills { get; set; }
-        public SpecialtyService SpecialtyService { get; set; }
-        public TypeOfWork TypeOfWork { get; set; }
-        public FormOfWork FormOfWork { get; set; }
-        public Province Province { get; set; }
+        public ResponseIdName Renter { get; set; }
+        public ResponseIdName Freelancer { get; set; }
         public int Floorprice { get; set; }
         public int Cellingprice { get; set; }
-        public Payform Payform { get; set; }
+        public ResponseIdName Payform { get; set; }
+        public ResponseIdName Specialty { get; set; }
+        public ResponseIdName Service { get; set; }
+        public ResponseIdName TypeOfWork { get; set; }
+        public ResponseIdName FormOfWork { get; set; }
+        public ProvinceResponse Province { get; set; }
+        public string Status { get; set; }
+        public ICollection<ResponseIdName> Skills { get; set; }
+
 
 
     }

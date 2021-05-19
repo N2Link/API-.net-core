@@ -14,11 +14,11 @@ namespace Api.Enities
         public string Tile { get; set; }
         public string Description { get; set; }
         public string Website { get; set; }
-        public int Speccializeid { get; set; }
+        public int SpecialtyId { get; set; }
         public int LevelId { get; set; }
         public bool OnReady { get; set; }
-        public int FormOnWorkId { get; set; }
-        public List<Skill> Skills { get; set; }
-        public List<Api.Models.Service> Services { get; set; }
+        public int FormOfWorkId { get; set; }
+        public List<ResponseIdName> Skills { get; set; }
+        public List<ResponseIdName> Services { get; set; }
     }
 }

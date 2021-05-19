@@ -26,40 +26,55 @@ namespace Api.Controllers
             _context = context;
         }
 
-        /*        [HttpGet("search")]
-                public async Task<ActionResult<IEnumerable<JobResponseModel>>>GetJobSearch
-                    ()
-                {
-
-                }*/
         [HttpGet("search")]
         public async Task<ActionResult<IEnumerable<JobResponseModel>>> GetListSerch
             (int page, int count,
-            string search, int? specialtyId, int? serviceId, int? formId, int? payId, int? typeId,
-            string? provinceId, long floorPrice =0, long cellingPrice= Int64.MaxValue)
+            string search, int? specialtyId, string? serviceIds, string? skillIds,
+            int? formId, int? payId, int? typeId,string? provinceId,
+            long floorPrice =0, long cellingPrice= Int64.MaxValue)
         {
-            /*            String jwt = Request.Headers["Authorization"];
-                        jwt = jwt.Substring(7);
-                        //Decode jwt and get payload
-                        var stream = jwt;
-                        var handler = new JwtSecurityTokenHandler();
-                        var jsonToken = handler.ReadToken(stream);
-                        var tokenS = jsonToken as JwtSecurityToken;
-                        //I can get Claims using:
-                        var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
-                        var account = await _context.Accounts
-                            .SingleOrDefaultAsync(p => p.Email == email);*/
+            List<string> partServiceId = new List<string>();
+            if (serviceIds != null)
+            {
+                partServiceId = serviceIds.Split(" ").ToList();
+            }
+            List<string> partSkillId = new List<string>();
+            if (serviceIds != null)
+            {
+                partSkillId = skillIds.Split(" ").ToList();
+            }
             string[] partSearch = search.Split(" ");
-            var list = _context.Jobs
+            List<Job> list = new List<Job>();
+            try
+            {
+                var listTemp = _context.Jobs
                 .Where(p => p.Name.Contains(search) &&
                 (specialtyId == null || p.SpecialtyId == specialtyId) &&
-                (serviceId == null || p.ServiceId == serviceId) &&
+                (serviceIds == null || partServiceId.Contains(p.ServiceId.ToString())) &&
                 (formId == null || p.FormId == formId) &&
                 (payId == null || p.PayformId == payId) &&
-                (typeId==null||p.TypeId== typeId)&&
+                (typeId == null || p.TypeId == typeId) &&
                 (provinceId == null || p.ProvinceId == provinceId) &&
                 p.Floorprice >= floorPrice && p.Cellingprice <= cellingPrice
                 ).ToList();
+                foreach (var item in listTemp)
+                {
+                    foreach (var skillId in partSkillId)
+                    {
+                        if (item.JobSkills.Select(p => p.SkillId).ToList()
+                            .Contains(Int32.Parse(skillId)))
+                        {
+                            list.Add(item);
+                            break;
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+
+                return BadRequest(new {message="loi code linq"});
+            }
             try
             {
                 return PaginationJob(page, count, list);
@@ -74,10 +89,17 @@ namespace Api.Controllers
         [HttpGet("pagination")]
         public async Task<ActionResult<IEnumerable<JobResponseModel>>> GetPagination(int page, int count)
         {
-            var list = await _context.Jobs.Include(p => p.Renter)
+            var list = await _context.Jobs
+                .Include(p => p.Renter)
+                .Include(p => p.Freelancer)
+                .Include(p => p.Form)
+                .Include(p => p.Type)
+                .Include(p => p.JobSkills).ThenInclude(p => p.Skill)
                 .Include(p => p.S).ThenInclude(p => p.Service)
                 .Include(p => p.S).ThenInclude(p => p.Specialty)
-                .Include(p => p.Payform).Include(p => p.JobSkills)
+                .Include(p => p.Payform)
+                .Include(p => p.JobSkills).ThenInclude(p => p.Skill)
+                .Where(p=>p.Deadline>DateTime.Now)
                 .ToListAsync();
             try
             {
@@ -110,27 +132,7 @@ namespace Api.Controllers
                 }
                 jobs.Add(list[i]);
             }
-            var listTemp = jobs.Select(p => new JobResponseModel()
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Renter = new IUserService.UserEntitis(p.Renter),
-                Freelancer = p.Freelancer != null ? new IUserService.UserEntitis(p.Freelancer) : null,
-                Deadline = p.Deadline,
-                SpecialtyService = new SpecialtyService()
-                {
-                    Service = new Models.Service() { Id = p.S.ServiceId, Name = p.S.Service.Name },
-                    Specialty = new Specialty() { Id = p.S.SpecialtyId, Name = p.S.Specialty.Name }
-                },
-                Cellingprice = p.Cellingprice,
-                Details = p.Details,
-                Floorprice = p.Floorprice,
-                Payform = new Payform() { Id = p.Payform.Id, Name = p.Payform.Name },
-                TypeOfWork = new TypeOfWork() { Id = p.Type.Id, Name = p.Type.Name },
-                FormOfWork = new FormOfWork() { Id = p.Form.Id, Name = p.Type.Name },
-                Skills = p.JobSkills
-                     .Select(p => new Skill() { Id = p.Skill.Id, Name = p.Skill.Name }).ToList(),
-            }).ToList();
+            var listTemp = jobs.Select(p => new JobResponseModel(p)).ToList();
             return Ok(
                 new
                 {
@@ -151,34 +153,23 @@ namespace Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<JobResponseModel>> GetJob(int id)
         {
-            var job = await _context.Jobs.FindAsync(id);
+            var job = await _context.Jobs
+                .Include(p => p.Renter)
+                .Include(p => p.Freelancer)
+                .Include(p=>p.Form)
+                .Include(p=>p.Type)
+                .Include(p=>p.JobSkills).ThenInclude(p=>p.Skill)
+                .Include(p => p.S).ThenInclude(p => p.Service)
+                .Include(p => p.S).ThenInclude(p => p.Specialty)
+                .Include(p => p.Payform)
+                .Include(p => p.JobSkills).ThenInclude(p => p.Skill)
+                .SingleOrDefaultAsync(p=>p.Id == id);
 
             if (job == null)
             {
                 return NotFound();
             }
-            var jobresponse = new JobResponseModel()
-            {
-
-                Id = job.Id,
-                Name = job.Name,
-                Renter = new IUserService.UserEntitis(job.Renter),
-                Freelancer = job.Freelancer != null ? new IUserService.UserEntitis(job.Freelancer) : null,
-                Deadline = job.Deadline,
-                SpecialtyService = new SpecialtyService()
-                {
-                    Service = new Models.Service() { Id = job.S.ServiceId, Name = job.S.Service.Name },
-                    Specialty = new Specialty() { Id = job.S.SpecialtyId, Name = job.S.Specialty.Name }
-                },
-                Cellingprice = job.Cellingprice,
-                Details = job.Details,
-                Floorprice = job.Floorprice,
-                Payform = new Payform() {Id = job.Payform.Id, Name = job.Payform.Name },
-                TypeOfWork = new TypeOfWork() {Id = job.Type.Id, Name = job.Type.Name },
-                FormOfWork = new FormOfWork() {Id = job.Form.Id, Name = job.Type.Name },
-                Skills = job.JobSkills
-                .Select(p => new Skill() { Id = p.Skill.Id, Name = p.Skill.Name }).ToList(),
-            };
+            var jobresponse = new JobResponseModel(job);            
             return jobresponse;
         }
 
@@ -193,7 +184,10 @@ namespace Api.Controllers
             {
                 return BadRequest();
             }
-
+            if (jobEditModel.Deadline <= DateTime.Now)
+            {
+                return BadRequest(new { message = "DateTime Invalid" });
+            }
             String jwt = Request.Headers["Authorization"];
             jwt = jwt.Substring(7);
             //Decode jwt and get payload
@@ -228,6 +222,7 @@ namespace Api.Controllers
             job.SpecialtyId = jobEditModel.SpecialtyId;
             job.ServiceId = jobEditModel.ServiceId;
             job.ProvinceId = jobEditModel.ProvinceId;
+            job.Status = "Waiting";
 
             var arrayRemove = _context.JobSkills.Where(p => p.JobId == id).ToArray();
             _context.JobSkills.RemoveRange(arrayRemove);

@@ -21,12 +21,12 @@ namespace Api.Enities
             OnReady = account.OnReady;
             AvatarUrl = account.AvatarUrl;
 
-            Role = new ResponseIdName(account.Role);
-            FormOnWork = new ResponseIdName(account.FormOnWork);
+            Role = account.Role==null? null: new ResponseIdName(account.Role);
+            FormOfWork = account.FormOfWorkId ==null?null: new ResponseIdName(account.FormOfWork);
             Level = account.LevelId == null ? null : new ResponseIdName(account.Level);
 
-            Speccialize = account.Speccializeid == null ? null 
-                : new ResponseIdName(account.Speccialize);
+            Specialty = account.SpecialtyId == null ? null 
+                : new ResponseIdName(account.Specialty);
 
             try
             {
@@ -43,11 +43,14 @@ namespace Api.Enities
             catch (Exception){}
             try
             {
-                FreelancerServices = account.FreelancerServices.Select(p => new FreelancerService
-                {
-                    FreelancerId = p.FreelancerId,
-                    Service = new Api.Models.Service() { }
-                }).ToList();
+                FreelancerServices = account.FreelancerServices
+                    .Select(p => new ResponseIdName(p.Service)).ToList();
+            }
+            catch (Exception){}    
+            try
+            {
+                FreelancerSkills = account.FreelancerSkills
+                    .Select(p => new ResponseIdName(p.Skill)).ToList();
             }
             catch (Exception){}
             try
@@ -80,13 +83,13 @@ namespace Api.Enities
         public bool? OnReady { get; set; }
         public string AvatarUrl { get; set; }
 
-        public virtual ResponseIdName FormOnWork { get; set; }
+        public virtual ResponseIdName FormOfWork { get; set; }
         public virtual ResponseIdName Level { get; set; }
         public virtual ResponseIdName Role { get; set; }
-        public virtual ResponseIdName Speccialize { get; set; }
+        public virtual ResponseIdName Specialty { get; set; }
         public TotalRatingModel TotalRatingModel { get; set; }
-        public virtual ICollection<FreelancerService> FreelancerServices { get; set; }
-        public virtual ICollection<FreelancerSkill> FreelancerSkills { get; set; }
+        public virtual ICollection<ResponseIdName> FreelancerServices { get; set; }
+        public virtual ICollection<ResponseIdName> FreelancerSkills { get; set; }
         public virtual ICollection<OfferHistory> OfferHistories { get; set; }
         public virtual ICollection<CapacityProfile> CapacityProfiles { get; set; }
         public virtual ICollection<JobResponseModel> JobFreelancers { get; set; }

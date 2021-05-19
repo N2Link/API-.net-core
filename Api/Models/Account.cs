@@ -35,16 +35,16 @@ namespace Api.Models
         public string Website { get; set; }
         public int Balance { get; set; }
         public bool IsAccuracy { get; set; }
-        public int? Speccializeid { get; set; }
+        public int? SpecialtyId { get; set; }
         public int? LevelId { get; set; }
         public bool? OnReady { get; set; }
-        public int? FormOnWorkId { get; set; }
+        public int? FormOfWorkId { get; set; }
         public string AvatarUrl { get; set; }
 
-        public virtual FormOfWork FormOnWork { get; set; }
+        public virtual FormOfWork FormOfWork { get; set; }
         public virtual Level Level { get; set; }
         public virtual Role Role { get; set; }
-        public virtual Specialty Speccialize { get; set; }
+        public virtual Specialty Specialty { get; set; }
         public virtual ICollection<CapacityProfile> CapacityProfiles { get; set; }
         public virtual ICollection<FreelancerService> FreelancerServices { get; set; }
         public virtual ICollection<FreelancerSkill> FreelancerSkills { get; set; }
