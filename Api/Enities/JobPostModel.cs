@@ -21,6 +21,6 @@ namespace Api.Enities
         public int SpecialtyId { get; set; }
         public int ServiceId { get; set; }
         public string ProvinceId { get; set; }
-        public ICollection<Skill> Skills { get; set; }
+        public ICollection<ResponseIdName> Skills { get; set; }
     }
 }

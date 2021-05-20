@@ -99,6 +99,7 @@ namespace Api.Controllers
                 .Include(p => p.S).ThenInclude(p => p.Specialty)
                 .Include(p => p.Payform)
                 .Include(p => p.JobSkills).ThenInclude(p => p.Skill)
+                .Include(p => p.Province)
                 .Where(p=>p.Deadline>DateTime.Now)
                 .ToListAsync();
             try
@@ -163,6 +164,7 @@ namespace Api.Controllers
                 .Include(p => p.S).ThenInclude(p => p.Specialty)
                 .Include(p => p.Payform)
                 .Include(p => p.JobSkills).ThenInclude(p => p.Skill)
+                .Include(p => p.Province)
                 .SingleOrDefaultAsync(p=>p.Id == id);
 
             if (job == null)
@@ -283,6 +285,7 @@ namespace Api.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }      
+
         [HttpPut("cancel/{id}")]
         public async Task<ActionResult> CancelJob(int id)
         {
@@ -364,6 +367,18 @@ namespace Api.Controllers
                 });
             }
             await _context.SaveChangesAsync();
+            job = await _context.Jobs
+                .Include(p => p.Renter)
+                .Include(p => p.Freelancer)
+                .Include(p => p.Form)
+                .Include(p => p.Type)
+                .Include(p => p.JobSkills).ThenInclude(p => p.Skill)
+                .Include(p => p.S).ThenInclude(p => p.Service)
+                .Include(p => p.S).ThenInclude(p => p.Specialty)
+                .Include(p => p.Payform)
+                .Include(p => p.JobSkills).ThenInclude(p => p.Skill)
+                .Include(p=>p.Province)
+                .SingleOrDefaultAsync(p => p.Id == job.Id);
             return Ok(job);
         }
 
