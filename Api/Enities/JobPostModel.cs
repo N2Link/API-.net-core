@@ -12,7 +12,6 @@ namespace Api.Enities
         public string Details { get; set; }
         public int TypeId { get; set; }
         public int FormId { get; set; }
-        public int WorkatId { get; set; }
         public int PayformId { get; set; }
         public DateTime Deadline { get; set; }
         public int Floorprice { get; set; }
@@ -21,6 +20,6 @@ namespace Api.Enities
         public int SpecialtyId { get; set; }
         public int ServiceId { get; set; }
         public string ProvinceId { get; set; }
-        public ICollection<ResponseIdName> Skills { get; set; }
+        public List<ResponseIdName> Skills { get; set; }
     }
 }

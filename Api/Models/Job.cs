@@ -22,7 +22,6 @@ namespace Api.Models
         public string Details { get; set; }
         public int TypeId { get; set; }
         public int FormId { get; set; }
-        public int WorkatId { get; set; }
         public int PayformId { get; set; }
         public DateTime Deadline { get; set; }
         public int Floorprice { get; set; }

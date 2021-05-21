@@ -215,7 +215,6 @@ namespace Api.Controllers
             job.Details = jobEditModel.Details;
             job.TypeId = jobEditModel.TypeId;
             job.FormId = jobEditModel.FormId;
-            job.WorkatId = jobEditModel.WorkatId;
             job.PayformId = jobEditModel.PayformId;
             job.Deadline = jobEditModel.Deadline;
             job.Floorprice = jobEditModel.Floorprice;
@@ -345,7 +344,6 @@ namespace Api.Controllers
                 Details = jobPostModel.Details,
                 TypeId = jobPostModel.TypeId,
                 FormId = jobPostModel.FormId,
-                WorkatId = jobPostModel.WorkatId,
                 PayformId = jobPostModel.PayformId,
                 Deadline = jobPostModel.Deadline,
                 Floorprice = jobPostModel.Floorprice,
@@ -379,7 +377,7 @@ namespace Api.Controllers
                 .Include(p => p.JobSkills).ThenInclude(p => p.Skill)
                 .Include(p=>p.Province)
                 .SingleOrDefaultAsync(p => p.Id == job.Id);
-            return Ok(job);
+            return Ok(new JobResponseModel(job));
         }
 
         // DELETE: api/Jobs/5

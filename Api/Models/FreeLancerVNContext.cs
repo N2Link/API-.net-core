@@ -237,8 +237,6 @@ namespace Api.Models
 
                 entity.Property(e => e.TypeId).HasColumnName("TypeID");
 
-                entity.Property(e => e.WorkatId).HasColumnName("WorkatID");
-
                 entity.HasOne(d => d.Form)
                     .WithMany(p => p.Jobs)
                     .HasForeignKey(d => d.FormId)

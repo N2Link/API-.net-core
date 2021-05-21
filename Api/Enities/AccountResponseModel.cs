@@ -30,17 +30,13 @@ namespace Api.Enities
 
             try
             {
-                CapacityProfiles = account.CapacityProfiles.Select(p => new CapacityProfile()
-                {
-                    Id = p.Id,
-                    FreelancerId = p.FreelancerId,
-                    ImageUrl = p.ImageUrl,
-                    Name = p.Name,
-                    Description = p.Description,
-                    Urlweb = p.Urlweb,
-                }).TakeLast(3).ToList();
+                CapacityProfiles = account.CapacityProfiles
+                    .Select(p => new CapacityProfileResponse(p)).TakeLast(3).ToList();
             }
-            catch (Exception){}
+            catch (Exception)
+            {
+                this.CapacityProfiles = new List<CapacityProfileResponse>();
+            }
             try
             {
                 FreelancerServices = account.FreelancerServices
@@ -53,12 +49,22 @@ namespace Api.Enities
                     .Select(p => new ResponseIdName(p.Skill)).ToList();
             }
             catch (Exception){}
+
             try
             {
                 this.JobRenters = account.JobRenters
-                    .Select(p => new JobResponseModel(p)).ToList();
-                this.JobFreelancers = account.JobFreelancers
-                    .Select(p => new JobResponseModel(p)).ToList();
+                    .Select(p => new JobResponseModel(p)).TakeLast(3).ToList();
+            } catch (Exception) { }
+
+            try
+            {
+                this.JobFreelancerDone = account.JobFreelancers
+                    .Where(p=>p.Status == "Done")
+                    .Select(p => new JobResponseModel(p)).TakeLast(3).ToList(); 
+
+                this.JobFreelancerResume = account.JobFreelancers
+                    .Where(p=>p.Status == "In progress")
+                    .Select(p => new JobResponseModel(p)).TakeLast(3).ToList();
             }
             catch (Exception){}
 
@@ -90,9 +96,9 @@ namespace Api.Enities
         public TotalRatingModel TotalRatingModel { get; set; }
         public virtual ICollection<ResponseIdName> FreelancerServices { get; set; }
         public virtual ICollection<ResponseIdName> FreelancerSkills { get; set; }
-        public virtual ICollection<OfferHistory> OfferHistories { get; set; }
-        public virtual ICollection<CapacityProfile> CapacityProfiles { get; set; }
-        public virtual ICollection<JobResponseModel> JobFreelancers { get; set; }
+        public virtual ICollection<CapacityProfileResponse> CapacityProfiles { get; set; }
+        public virtual ICollection<JobResponseModel> JobFreelancerResume { get; set; }
+        public virtual ICollection<JobResponseModel> JobFreelancerDone { get; set; }
         public virtual ICollection<JobResponseModel> JobRenters { get; set; }
     }
 }

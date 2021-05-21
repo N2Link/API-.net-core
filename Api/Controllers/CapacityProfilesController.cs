@@ -84,7 +84,7 @@ namespace Api.Controllers
             }
             //create image
             string newUrl = "";
-            if (cpEditModel.ImageBase64 != null)
+            if (cpEditModel.ImageBase64 != "")
             {
                 string imageUrl = _webHostEnvironment.WebRootPath;
                 newUrl = "\\Images\\" + capacityProfile.Id + "_" + cpEditModel.ImageName;
