@@ -2,15 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Api.Models;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
 using Api.Enities;
-using Api.Service;
-using WebApi.Helpers;
+using Api.Helpers;
 
 namespace Api.Controllers
 {
@@ -24,6 +22,12 @@ namespace Api.Controllers
         public JobsController(FreeLancerVNContext context)
         {
             _context = context;
+        }
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<JobForListResponse>>> getJobs()
+        {
+            return await _context.Jobs.Include(p => p.Renter).OrderByDescending(p => p.Id)
+                .Select(p => new JobForListResponse(p)).ToListAsync();
         }
 
         [HttpGet("search")]
@@ -143,12 +147,6 @@ namespace Api.Controllers
                 }); ;
         }
 
-        // GET: api/Jobs
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Job>>> GetJobs()
-        {
-            return await _context.Jobs.ToListAsync();
-        }
 
         // GET: api/Jobs/5
         [HttpGet("{id}")]

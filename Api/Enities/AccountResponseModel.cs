@@ -14,7 +14,7 @@ namespace Api.Enities
             Name = account.Name;
             Phone = account.Phone;
             Email = account.Email;
-            Tile = account.Tile;
+            Title = account.Tile;
             Description = account.Description;
             Website = account.Website;
             Balance = account.Balance;
@@ -31,7 +31,7 @@ namespace Api.Enities
             try
             {
                 CapacityProfiles = account.CapacityProfiles
-                    .Select(p => new CapacityProfileResponse(p)).TakeLast(3).ToList();
+                    .Select(p => new CapacityProfileResponse(p)).TakeLast(3).OrderByDescending(p => p.Id).ToList();
             }
             catch (Exception)
             {
@@ -53,18 +53,18 @@ namespace Api.Enities
             try
             {
                 this.JobRenters = account.JobRenters
-                    .Select(p => new JobResponseModel(p)).TakeLast(3).ToList();
+                    .Select(p => new JobResponseModel(p)).TakeLast(3).OrderByDescending(p => p.Id).ToList();
             } catch (Exception) { }
 
             try
             {
                 this.JobFreelancerDone = account.JobFreelancers
                     .Where(p=>p.Status == "Done")
-                    .Select(p => new JobResponseModel(p)).TakeLast(3).ToList(); 
+                    .Select(p => new JobResponseModel(p)).TakeLast(3).OrderByDescending(p=>p.Id).ToList(); 
 
                 this.JobFreelancerResume = account.JobFreelancers
                     .Where(p=>p.Status == "In progress")
-                    .Select(p => new JobResponseModel(p)).TakeLast(3).ToList();
+                    .Select(p => new JobResponseModel(p)).TakeLast(3).OrderByDescending(p => p.Id).ToList();
             }
             catch (Exception){}
 
@@ -81,7 +81,7 @@ namespace Api.Enities
         public string Name { get; set; }
         public string Phone { get; set; }
         public string Email { get; set; }
-        public string Tile { get; set; }
+        public string Title { get; set; }
         public string Description { get; set; }
         public string Website { get; set; }
         public int? Balance { get; set; }

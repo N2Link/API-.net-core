@@ -9,7 +9,8 @@ using System.Net.Mail;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
-using WebApi.Helpers;
+using Api.Helpers;
+using Api.Enities;
 
 namespace Api.Service
 {
@@ -23,44 +24,18 @@ namespace Api.Service
         void Delete(int id);
         public class UserEntitis
         {
-            public Account account { get; set; }
+            public AccountResponseModel account {get;set;}
             public String Token { get; set; }
 
             public UserEntitis(Account account)
             {
-                if(account == null)
-                {
-                    return;
-                }
-                account.PasswordHash = null;
-                account.PasswordSalt = null;
-                if (account.Role != null)
-                {
-                    account.Role.Accounts = null;
-                }    
-                if (account.FormOfWork != null)
-                {
-                    account.FormOfWork.Accounts = null;
-                    account.FormOfWork.Jobs = null;
-
-                }  
-                if (account.Level != null)
-                {
-                    account.Level.Accounts = null;
-
-                }
-                if (account.Specialty!=null)
-                {
-                    account.Specialty.Accounts = null;
-                    account.Specialty.SpecialtyServices = null;
-                }
-                this.account = account;
+                this.account = new AccountResponseModel(account, false);
             }
             public UserEntitis createUserToken()
             {
                 List<Claim> lstClaim = new List<Claim>(); //CLAIM USER INFO
                 lstClaim.Add(new Claim(ClaimTypes.Email, this.account.Email));
-                lstClaim.Add(new Claim(ClaimTypes.Role, this.account.RoleId.ToString()));
+                lstClaim.Add(new Claim(ClaimTypes.Role, this.account.Role.Id.ToString()));
 
                 //CREATE JWT TOKEN
                 var tokenHandler = new JwtSecurityTokenHandler();
@@ -85,9 +60,67 @@ namespace Api.Service
         FreeLancerVNContext context = new FreeLancerVNContext();
         public IUserService.UserEntitis Auth(string email, string password)
         {
-            var list = context.Accounts.Include(p => p.Role)
-                .Include(p=>p.FormOfWork).Include(p=>p.Level)
-                .Include(p=>p.Specialty).ToList();
+            var list = context.Accounts
+                .Include(p => p.JobRenters)
+                .ThenInclude(p=>p.S).ThenInclude(p=>p.Service)
+                .AsSplitQuery()
+                .Include(p => p.JobRenters)
+                .ThenInclude(p=>p.S).ThenInclude(p=>p.Specialty)
+                .AsSplitQuery()
+                .Include(p => p.JobRenters)
+                .ThenInclude(p=>p.Form)
+                .AsSplitQuery()
+                .Include(p => p.JobRenters)
+                .ThenInclude(p=>p.Type)
+                .AsSplitQuery()
+                .Include(p => p.JobRenters)
+                .ThenInclude(p=>p.Payform)
+                .AsSplitQuery()
+                .Include(p => p.JobRenters)
+                .ThenInclude(p => p.JobSkills).ThenInclude(p => p.Skill)
+                .AsSplitQuery()
+
+
+                .Include(p => p.JobFreelancers)
+                .ThenInclude(p=>p.S).ThenInclude(p=>p.Service)
+                .AsSplitQuery()
+                .Include(p => p.JobFreelancers)
+                .ThenInclude(p=>p.S).ThenInclude(p=>p.Specialty)
+                .AsSplitQuery()
+                .Include(p => p.JobFreelancers)
+                .ThenInclude(p=>p.Form)
+                .AsSplitQuery()
+                .Include(p => p.JobFreelancers)
+                .ThenInclude(p=>p.Type)
+                .AsSplitQuery()
+                .Include(p => p.JobFreelancers)
+                .ThenInclude(p=>p.Payform)
+                .AsSplitQuery()
+                .Include(p => p.JobFreelancers)
+                .ThenInclude(p => p.JobSkills).ThenInclude(p => p.Skill)
+                .AsSplitQuery()
+                .AsSplitQuery()
+
+
+                .Include(p => p.FreelancerSkills).ThenInclude(p => p.Skill)
+                .AsSplitQuery()
+                .Include(p => p.FreelancerServices).ThenInclude(p => p.Service)
+                .AsSplitQuery()
+                .Include(p => p.Specialty)
+                .AsSplitQuery()
+                .Include(p => p.Role)
+                .AsSplitQuery()
+                .Include(p => p.Ratings)
+                .AsSplitQuery()
+                .Include(p => p.Level)
+                .AsSplitQuery()
+                .Include(p => p.FormOfWork)
+                .AsSplitQuery()
+                .Include(p => p.OfferHistories)
+                .AsSplitQuery()
+                .Include(p => p.CapacityProfiles)
+                .ThenInclude(p => p.ProfileServices).ThenInclude(p => p.Service)
+                .AsSplitQuery().ToList();
             Account account = list.SingleOrDefault(p => p.Email == email );
             if (account == null)
             {
@@ -122,6 +155,9 @@ namespace Api.Service
             account.Balance = 0;
             context.Accounts.Add(account);
             context.SaveChanges();
+            account = context.Accounts
+                .Include(p => p.Role).SingleOrDefault(p => p.Id == account.Id);
+
             IUserService.UserEntitis userEntitis = new IUserService.UserEntitis(account);
             userEntitis.createUserToken();
             return userEntitis;

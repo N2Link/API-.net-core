@@ -9,7 +9,7 @@ using Api.Models;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
 using Api.Enities;
-using WebApi.Helpers;
+using Api.Helpers;
 
 namespace Api.Controllers
 {
@@ -26,20 +26,13 @@ namespace Api.Controllers
 
         // GET: api/Accounts
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AccountResponseModel>>> GetAccounts()
+        public async Task<ActionResult<IEnumerable<AccountForListResponse>>> GetAccounts()
         {
             return await _context.Accounts
-                .Include(p => p.JobRenters)
-                .Include(p => p.JobFreelancers)
-                .Include(p => p.FreelancerSkills).ThenInclude(p=>p.Skill)
-                .Include(p => p.FreelancerServices).ThenInclude(p=>p.Service)
                 .Include(p => p.Specialty)
-                .Include(p => p.Role)
                 .Include(p => p.Ratings)
                 .Include(p => p.Level)
-                .Include(p => p.FormOfWork)
-                .Include(p => p.OfferHistories)
-                .Include(p => p.CapacityProfiles).Select(p=> new AccountResponseModel(p, true)).ToListAsync();
+                .Select(p=> new AccountForListResponse(p)).ToListAsync();
         }
 /*        [HttpGet("search")]
         public async Task<ActionResult> GetLisSearch(int page, int count, string search)

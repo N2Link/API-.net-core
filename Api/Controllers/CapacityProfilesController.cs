@@ -38,6 +38,16 @@ namespace Api.Controllers
                 .ToListAsync();
         }
 
+        [HttpGet("freelancer/{freelancerID}")]
+        public async Task<ActionResult<IEnumerable<CapacityProfileResponse>>> GetCPListByUserId(int freelancerID)
+        {
+            return await _context.CapacityProfiles
+                        .Include(p => p.ProfileServices).ThenInclude(p => p.Service)
+                        .Where(p=>p.FreelancerId==freelancerID)
+                        .Select(p => new CapacityProfileResponse(p))
+                        .ToListAsync();
+        }
+
         // GET: api/CapacityProfiles/5
         [HttpGet("{id}")]
         public async Task<ActionResult<CapacityProfileResponse>> GetCapacityProfile(int id)
