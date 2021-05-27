@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Api.Models;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
+using Api.Enities;
 
 namespace Api.Controllers
 {
@@ -25,9 +26,10 @@ namespace Api.Controllers
 
         // GET: api/OfferHistories
         [HttpGet("freelancer/{freelancerid}")]
-        public ActionResult<List<OfferHistory>> GetFreelancerOfferHistories(int freelancerid)
+        public ActionResult<List<OfferHistoryResponse>> GetFreelancerOfferHistories(int freelancerid)
         {
-            var account = _context.Accounts.Find(freelancerid);
+            var account = _context.Accounts.Include(p=>p.OfferHistories).ThenInclude(p=>p.Job)
+                .SingleOrDefault(p=>p.Id ==freelancerid);
             if (account == null)
             {
                 return BadRequest();
@@ -45,13 +47,16 @@ namespace Api.Controllers
             {
                 return BadRequest();
             }
-            return account.OfferHistories.ToList();
+            return account.OfferHistories.Select(p=>new OfferHistoryResponse(p, 1)).ToList();
         }
 
         [HttpGet("job/{jobid}")]
-        public ActionResult<List<OfferHistory>> GetJobOfferHistories(int jobid)
+        public ActionResult<List<OfferHistoryResponse>> GetJobOfferHistories(int jobid)
         {
-            var job = _context.Jobs.Find(jobid);
+            var job = _context.Jobs
+                .Include(p=>p.Freelancer).ThenInclude(p=>p.Ratings).AsSplitQuery()
+                .Include(p=>p.OfferHistories)
+                .SingleOrDefault(p=>p.Id == jobid);
             if (job == null)
             {
                 return BadRequest();
@@ -72,7 +77,7 @@ namespace Api.Controllers
             {
                 return BadRequest();
             }
-            return job.OfferHistories.ToList();
+            return job.OfferHistories.Select(p=>new OfferHistoryResponse(p,2)).ToList();
         }
 
         // GET: api/OfferHistories/5

@@ -14,11 +14,18 @@ namespace Api.Enities
             Name = account.Name;
             Title = account.Tile;
             AvatarUrl = account.AvatarUrl;
+            try
+            {
+                Level = account.LevelId == null ? null : new ResponseIdName(account.Level);
+            }
+            catch (Exception){}
+            try
+            {
+                 Specialty = account.SpecialtyId == null ? null
+                        : new ResponseIdName(account.Specialty);
+            }
+            catch (Exception){}
 
-            Level = account.LevelId == null ? null : new ResponseIdName(account.Level);
-
-            Specialty = account.SpecialtyId == null ? null
-                : new ResponseIdName(account.Specialty);
 
             this.TotalRatingModel = new TotalRatingModel(account.Ratings.ToList());
 
