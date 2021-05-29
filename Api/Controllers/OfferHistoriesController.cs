@@ -54,7 +54,7 @@ namespace Api.Controllers
         public ActionResult<List<OfferHistoryResponse>> GetJobOfferHistories(int jobid)
         {
             var job = _context.Jobs
-                .Include(p=>p.Freelancer).ThenInclude(p=>p.Ratings).AsSplitQuery()
+                .Include(p=>p.Freelancer).ThenInclude(p=>p.RatingFreelancers).AsSplitQuery()
                 .Include(p=>p.OfferHistories)
                 .SingleOrDefault(p=>p.Id == jobid);
             if (job == null)
@@ -142,7 +142,7 @@ namespace Api.Controllers
                     throw;
                 }
             }//add todo list to database
-            if (offerHistory.Status == "Done")
+/*            if (offerHistory.Status == "Done")
             {
                 var listOffersRejected = _context.OfferHistories
                     .Where(p => p.JobId == id && p.FreelancerId != offerHistory.FreelancerId).ToList();
@@ -161,7 +161,7 @@ namespace Api.Controllers
                     });
                 }
                 await _context.SaveChangesAsync();
-            }
+            }*/
             return Ok();
         }
 

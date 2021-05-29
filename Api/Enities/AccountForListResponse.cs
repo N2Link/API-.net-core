@@ -26,8 +26,7 @@ namespace Api.Enities
             }
             catch (Exception){}
 
-
-            this.TotalRatingModel = new TotalRatingModel(account.Ratings.ToList());
+            this.TotalRatingModel = new TotalRatingModel(account.RatingFreelancers.ToList());
 
         }
 

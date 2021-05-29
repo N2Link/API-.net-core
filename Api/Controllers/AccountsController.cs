@@ -30,28 +30,27 @@ namespace Api.Controllers
         {
             return await _context.Accounts
                 .Include(p => p.Specialty)
-                .Include(p => p.Ratings)
+                .Include(p => p.RatingFreelancers)
                 .Include(p => p.Level)
-                .Select(p=> new AccountForListResponse(p)).ToListAsync();
+                .Select(p => new AccountForListResponse(p)).ToListAsync();
         }
 /*        [HttpGet("search")]
         public async Task<ActionResult> GetLisSearch(int page, int count, string search)
         {
-            var list = _context.Accounts.Where(p=>p.Name.Contains())
+            var list = _context.Accounts.Where(p => p.Name.Contains(search));
         }*/
 
         [HttpGet("pagination")]
         public async Task<ActionResult> GetPagination(int page, int count)
         {
             var list = await _context.Accounts
-                .Include(p=>p.JobFreelancers)
+                .Include(p => p.JobFreelancers)
                 .Include(p => p.FreelancerSkills).ThenInclude(p => p.Skill)
                 .Include(p => p.FreelancerServices).ThenInclude(p => p.Service)
-                .Include(p=>p.Specialty)
-                .Include(p=>p.Role)
-                .Include(p=>p.Ratings)
-                .Include(p=>p.Level)
-                .Include(p=>p.FormOfWork)
+                .Include(p => p.Specialty)
+                .Include(p => p.Role)
+                .Include(p => p.RatingFreelancers)
+                .Include(p => p.Level)
                 .ToListAsync();
             try
             {
@@ -84,9 +83,9 @@ namespace Api.Controllers
                 amount = list.Count(),
                 page = Math.Ceiling(Decimal.Parse(list.Count.ToString()) /
                     Decimal.Parse(count.ToString())) + 1,
-                list = accounts.Select(p =>new AccountResponseModel(p,true)).ToList()
+                list = accounts.Select(p => new AccountResponseModel(p, true)).ToList()
             });
-    }
+        }
 
         // GET: api/Accounts/5
         [HttpGet("{id}")]
@@ -141,11 +140,9 @@ namespace Api.Controllers
                 .AsSplitQuery()
                 .Include(p => p.Role)
                 .AsSplitQuery()
-                .Include(p => p.Ratings)
+                .Include(p => p.RatingFreelancers)
                 .AsSplitQuery()
                 .Include(p => p.Level)
-                .AsSplitQuery()
-                .Include(p => p.FormOfWork)
                 .AsSplitQuery()
                 .Include(p => p.OfferHistories)
                 .AsSplitQuery()
@@ -159,7 +156,7 @@ namespace Api.Controllers
                 return NotFound();
             }
 
-            return new AccountResponseModel(account,true);
+            return new AccountResponseModel(account, true);
         }
 
         // PUT: api/Accounts/5
@@ -179,7 +176,7 @@ namespace Api.Controllers
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             var account = _context.Accounts.Find(id);
-            if(account == null||account.Email!=email)
+            if (account == null || account.Email != email)
             {
                 return BadRequest();
             }
@@ -187,12 +184,11 @@ namespace Api.Controllers
             account.Name = accountEditModel.Name;
             account.RoleId = accountEditModel.RoleId;
             account.Phone = accountEditModel.Phone;
-            account.Tile = accountEditModel.Tile;   
+            account.Tile = accountEditModel.Tile;
             account.Description = accountEditModel.Description;
             account.Website = accountEditModel.Website;
             account.SpecialtyId = accountEditModel.SpecialtyId;
             account.LevelId = accountEditModel.LevelId;
-            account.FormOfWorkId = accountEditModel.FormOfWorkId;
             account.OnReady = accountEditModel.OnReady;
 
             var arrSkillsRemove = _context.FreelancerSkills.Where(p => p.FreelancerId == account.Id).ToArray();
@@ -208,7 +204,7 @@ namespace Api.Controllers
                     FreelancerId = account.Id,
                     SkillId = item.Id
                 });
-            }          
+            }
             foreach (var item in accountEditModel.Services)
             {
                 _context.FreelancerServices.Add(new FreelancerService()
@@ -217,7 +213,7 @@ namespace Api.Controllers
                     ServiceId = item.Id
                 });
             }
-             _context.Entry(account).State = EntityState.Modified;
+            _context.Entry(account).State = EntityState.Modified;
             try
             {
                 await _context.SaveChangesAsync();
@@ -282,19 +278,19 @@ namespace Api.Controllers
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             var account = _context.Accounts
                 .Include(p => p.JobRenters)
-                .ThenInclude(p=>p.S).ThenInclude(p=>p.Service)
+                .ThenInclude(p => p.S).ThenInclude(p => p.Service)
                 .AsSplitQuery()
                 .Include(p => p.JobRenters)
-                .ThenInclude(p=>p.S).ThenInclude(p=>p.Specialty)
+                .ThenInclude(p => p.S).ThenInclude(p => p.Specialty)
                 .AsSplitQuery()
                 .Include(p => p.JobRenters)
-                .ThenInclude(p=>p.Form)
+                .ThenInclude(p => p.Form)
                 .AsSplitQuery()
                 .Include(p => p.JobRenters)
-                .ThenInclude(p=>p.Type)
+                .ThenInclude(p => p.Type)
                 .AsSplitQuery()
                 .Include(p => p.JobRenters)
-                .ThenInclude(p=>p.Payform)
+                .ThenInclude(p => p.Payform)
                 .AsSplitQuery()
                 .Include(p => p.JobRenters)
                 .ThenInclude(p => p.JobSkills).ThenInclude(p => p.Skill)
@@ -302,19 +298,19 @@ namespace Api.Controllers
 
 
                 .Include(p => p.JobFreelancers)
-                .ThenInclude(p=>p.S).ThenInclude(p=>p.Service)
+                .ThenInclude(p => p.S).ThenInclude(p => p.Service)
                 .AsSplitQuery()
                 .Include(p => p.JobFreelancers)
-                .ThenInclude(p=>p.S).ThenInclude(p=>p.Specialty)
+                .ThenInclude(p => p.S).ThenInclude(p => p.Specialty)
                 .AsSplitQuery()
                 .Include(p => p.JobFreelancers)
-                .ThenInclude(p=>p.Form)
+                .ThenInclude(p => p.Form)
                 .AsSplitQuery()
                 .Include(p => p.JobFreelancers)
-                .ThenInclude(p=>p.Type)
+                .ThenInclude(p => p.Type)
                 .AsSplitQuery()
                 .Include(p => p.JobFreelancers)
-                .ThenInclude(p=>p.Payform)
+                .ThenInclude(p => p.Payform)
                 .AsSplitQuery()
                 .Include(p => p.JobFreelancers)
                 .ThenInclude(p => p.JobSkills).ThenInclude(p => p.Skill)
@@ -330,11 +326,9 @@ namespace Api.Controllers
                 .AsSplitQuery()
                 .Include(p => p.Role)
                 .AsSplitQuery()
-                .Include(p => p.Ratings)
+                .Include(p => p.RatingFreelancers)
                 .AsSplitQuery()
                 .Include(p => p.Level)
-                .AsSplitQuery()
-                .Include(p => p.FormOfWork)
                 .AsSplitQuery()
                 .Include(p => p.OfferHistories)
                 .AsSplitQuery()
@@ -342,7 +336,7 @@ namespace Api.Controllers
                 .ThenInclude(p => p.ProfileServices).ThenInclude(p => p.Service)
                 .AsSplitQuery()
                 .SingleOrDefault(p => p.Email == email);
-                
+
             if (account == null)
             {
                 return BadRequest();

@@ -9,6 +9,7 @@ namespace Api.Models
     {
         public Province()
         {
+            Accounts = new HashSet<Account>();
             Jobs = new HashSet<Job>();
         }
 
@@ -16,6 +17,7 @@ namespace Api.Models
         public string Name { get; set; }
         public string Type { get; set; }
 
+        public virtual ICollection<Account> Accounts { get; set; }
         public virtual ICollection<Job> Jobs { get; set; }
     }
 }

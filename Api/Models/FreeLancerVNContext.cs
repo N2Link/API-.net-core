@@ -36,7 +36,6 @@ namespace Api.Models
         public virtual DbSet<Skill> Skills { get; set; }
         public virtual DbSet<Specialty> Specialties { get; set; }
         public virtual DbSet<SpecialtyService> SpecialtyServices { get; set; }
-        public virtual DbSet<Todolist> Todolists { get; set; }
         public virtual DbSet<TypeOfWork> TypeOfWorks { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -68,8 +67,6 @@ namespace Api.Models
                     .IsRequired()
                     .HasMaxLength(100);
 
-                entity.Property(e => e.FormOfWorkId).HasColumnName("FormOfWorkID");
-
                 entity.Property(e => e.LevelId).HasColumnName("LevelID");
 
                 entity.Property(e => e.Name)
@@ -88,21 +85,26 @@ namespace Api.Models
                     .IsRequired()
                     .HasMaxLength(12);
 
+                entity.Property(e => e.ProvineId)
+                    .HasMaxLength(5)
+                    .IsUnicode(false)
+                    .HasColumnName("ProvineID");
+
                 entity.Property(e => e.RoleId).HasColumnName("RoleID");
 
                 entity.Property(e => e.Tile).HasMaxLength(50);
 
                 entity.Property(e => e.Website).HasMaxLength(30);
 
-                entity.HasOne(d => d.FormOfWork)
-                    .WithMany(p => p.Accounts)
-                    .HasForeignKey(d => d.FormOfWorkId)
-                    .HasConstraintName("FK_User_FormOfWork");
-
                 entity.HasOne(d => d.Level)
                     .WithMany(p => p.Accounts)
                     .HasForeignKey(d => d.LevelId)
                     .HasConstraintName("FK_User_Level");
+
+                entity.HasOne(d => d.Provine)
+                    .WithMany(p => p.Accounts)
+                    .HasForeignKey(d => d.ProvineId)
+                    .HasConstraintName("FK_Account_Province");
 
                 entity.HasOne(d => d.Role)
                     .WithMany(p => p.Accounts)
@@ -318,6 +320,8 @@ namespace Api.Models
 
                 entity.Property(e => e.Id).HasColumnName("ID");
 
+                entity.Property(e => e.JobId).HasColumnName("JobID");
+
                 entity.Property(e => e.Message1)
                     .IsRequired()
                     .HasMaxLength(500)
@@ -330,6 +334,12 @@ namespace Api.Models
                 entity.Property(e => e.Status)
                     .IsRequired()
                     .HasMaxLength(20);
+
+                entity.HasOne(d => d.Job)
+                    .WithMany(p => p.Messages)
+                    .HasForeignKey(d => d.JobId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Message_Job");
 
                 entity.HasOne(d => d.Receive)
                     .WithMany(p => p.MessageReceives)
@@ -357,6 +367,10 @@ namespace Api.Models
                 entity.Property(e => e.Description)
                     .IsRequired()
                     .HasMaxLength(500);
+
+                entity.Property(e => e.ExpectedDay)
+                    .IsRequired()
+                    .HasMaxLength(50);
 
                 entity.Property(e => e.Status)
                     .IsRequired()
@@ -409,7 +423,7 @@ namespace Api.Models
                     .WithMany(p => p.ProfileServices)
                     .HasForeignKey(d => d.ServiceId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_ProfileService_Service");
+                    .HasConstraintName("FK_ProfileService_Service1");
             });
 
             modelBuilder.Entity<Province>(entity =>
@@ -442,19 +456,19 @@ namespace Api.Models
 
                 entity.Property(e => e.FreelancerId).HasColumnName("FreelancerID");
 
-                entity.Property(e => e.JobId).HasColumnName("JobID");
+                entity.Property(e => e.RenterId).HasColumnName("RenterID");
 
                 entity.HasOne(d => d.Freelancer)
-                    .WithMany(p => p.Ratings)
+                    .WithMany(p => p.RatingFreelancers)
                     .HasForeignKey(d => d.FreelancerId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Rating_User");
 
-                entity.HasOne(d => d.Job)
-                    .WithMany(p => p.Ratings)
-                    .HasForeignKey(d => d.JobId)
+                entity.HasOne(d => d.Renter)
+                    .WithMany(p => p.RatingRenters)
+                    .HasForeignKey(d => d.RenterId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Rating_Job");
+                    .HasConstraintName("FK_Rating_Account");
             });
 
             modelBuilder.Entity<Role>(entity =>
@@ -524,27 +538,6 @@ namespace Api.Models
                     .HasForeignKey(d => d.SpecialtyId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_SpecialtyService_Specialty");
-            });
-
-            modelBuilder.Entity<Todolist>(entity =>
-            {
-                entity.HasKey(e => new { e.JobId, e.Todo });
-
-                entity.ToTable("Todolist");
-
-                entity.Property(e => e.JobId).HasColumnName("JobID");
-
-                entity.Property(e => e.Todo).HasMaxLength(200);
-
-                entity.Property(e => e.Status)
-                    .IsRequired()
-                    .HasMaxLength(50);
-
-                entity.HasOne(d => d.Job)
-                    .WithMany(p => p.Todolists)
-                    .HasForeignKey(d => d.JobId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Todolist_Job");
             });
 
             modelBuilder.Entity<TypeOfWork>(entity =>

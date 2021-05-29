@@ -22,7 +22,6 @@ namespace Api.Enities
             AvatarUrl = account.AvatarUrl;
 
             Role = account.Role==null? null: new ResponseIdName(account.Role);
-            FormOfWork = account.FormOfWorkId ==null?null: new ResponseIdName(account.FormOfWork);
             Level = account.LevelId == null ? null : new ResponseIdName(account.Level);
 
             Specialty = account.SpecialtyId == null ? null 
@@ -68,7 +67,7 @@ namespace Api.Enities
             }
             catch (Exception){}
 
-            this.TotalRatingModel = new TotalRatingModel(account.Ratings.ToList());
+            this.TotalRatingModel = new TotalRatingModel(account.RatingFreelancers.ToList());
 
             if (isPrivate)
             {
@@ -89,7 +88,6 @@ namespace Api.Enities
         public bool? OnReady { get; set; }
         public string AvatarUrl { get; set; }
 
-        public virtual ResponseIdName FormOfWork { get; set; }
         public virtual ResponseIdName Level { get; set; }
         public virtual ResponseIdName Role { get; set; }
         public virtual ResponseIdName Specialty { get; set; }

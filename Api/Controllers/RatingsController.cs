@@ -32,12 +32,9 @@ namespace Api.Controllers
             {
                 Id = p.Id,
                 FreelancerId = p.FreelancerId,
-                JobId = p.JobId,
-                Level = p.Level,
-                Price = p.Price,
-                Profession = p.Profession,
-                Quality = p.Quality,
-                Time = p.Time
+                RenterId = p.RenterId,
+                Star = p.Star,
+                Comment = p.Comment
             }).ToListAsync();
         }  
         [HttpGet("listRatingFreelancer/{freelancerId}")]
@@ -59,15 +56,12 @@ namespace Api.Controllers
             return await _context.Ratings
                 .Where(p => p.FreelancerId == freelancerId)
                 .Select(p=>new Rating() 
-                { 
+                {
                     Id = p.Id,
                     FreelancerId = p.FreelancerId,
-                    JobId =p.JobId,
-                    Level = p.Level,
-                    Price = p.Price,
-                    Profession = p.Profession,
-                    Quality = p.Quality,
-                    Time= p.Time
+                    RenterId = p.RenterId,
+                    Star = p.Star,
+                    Comment = p.Comment
                 }).ToListAsync();
         }
 
@@ -85,20 +79,8 @@ namespace Api.Controllers
             {
                 return Ok(new { message = "There is no current evaluation" });
             }
-            Rating rating = new Rating()
-            {
-                Price = Int32.Parse(ratings.Select(p => p.Price).Average().ToString()),
-                Level = Int32.Parse(ratings.Select(p => p.Level).Average().ToString()),
-                Profession = Int32.Parse(ratings.Select(p => p.Profession).Average().ToString()),
-                Quality = Int32.Parse(ratings.Select(p => p.Quality).Average().ToString()),
-                Time = Int32.Parse(ratings.Select(p => p.Time).Average().ToString())
-            };
-            float a = (rating.Profession + rating.Price + rating.Level + rating.Quality + rating.Time) / 5;
-            return Ok(new { 
-                Avg = a,
-                Count= ratings.Count(),
-                Rating= rating,
-            });
+
+            return Ok(new TotalRatingModel(ratings));
         }
 
         // PUT: api/Ratings/5
@@ -126,22 +108,14 @@ namespace Api.Controllers
             var renter = await _context.Accounts
                 .SingleOrDefaultAsync(p => p.Email == email);
 
-            var check = renter.JobRenters.SingleOrDefault(p => p.Id == ratingPost.JobId);
-            if (check == null)
+            var check = renter.RatingRenters.SingleOrDefault(p => p.FreelancerId == ratingPost.FreelancerId);
+            if (check != null)
             {
-                return BadRequest();
+                return BadRequest(new { message = "Bạn đã đánh giá Freelancer này rồi" });
             }
-            if (check.FreelancerId == null || check.FreelancerId != ratingPost.FreelancerId)
-            {
-                return BadRequest();
-            }
-            rating.JobId = ratingPost.JobId;
+            rating.RenterId =renter.Id;
             rating.FreelancerId = ratingPost.FreelancerId;
-            rating.Level = ratingPost.Level;
-            rating.Price = ratingPost.Price;
-            rating.Profession = ratingPost.Profession;
-            rating.Quality = ratingPost.Quality;
-            rating.Time = ratingPost.Quality;
+            rating.Star = rating.Star;
             rating.Comment = ratingPost.Comment;
             _context.Entry(rating).State = EntityState.Modified;
             await _context.SaveChangesAsync();
@@ -167,24 +141,16 @@ namespace Api.Controllers
             var renter = await _context.Accounts
                 .SingleOrDefaultAsync(p => p.Email == email);
 
-            var check = renter.JobRenters.SingleOrDefault(p => p.Id == ratingPost.JobId);
-            if (check == null)
+            var check = renter.RatingRenters.SingleOrDefault(p =>p.FreelancerId == ratingPost.FreelancerId);
+            if (check != null)
             {
-                return BadRequest();
-            }
-            if (check.FreelancerId == null || check.FreelancerId != ratingPost.FreelancerId)
-            {
-                return BadRequest();
+                return BadRequest(new { message = "Bạn đã đánh giá Freelancer này rồi" });
             }
             Rating rating = new Rating()
             {
-                JobId = ratingPost.JobId,
+                RenterId = renter.Id,
                 FreelancerId = ratingPost.FreelancerId,
-                Level = ratingPost.Level,
-                Price = ratingPost.Price,
-                Profession = ratingPost.Profession,
-                Quality = ratingPost.Quality,
-                Time = ratingPost.Quality,
+                Star = ratingPost.Star,
                 Comment = ratingPost.Comment,
             };
             _context.Ratings.Add(rating);

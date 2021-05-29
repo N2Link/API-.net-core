@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text.Json.Serialization;
 
 #nullable disable
 
@@ -18,14 +17,13 @@ namespace Api.Models
             MessageReceives = new HashSet<Message>();
             MessageSenders = new HashSet<Message>();
             OfferHistories = new HashSet<OfferHistory>();
-            Ratings = new HashSet<Rating>();
+            RatingFreelancers = new HashSet<Rating>();
+            RatingRenters = new HashSet<Rating>();
         }
 
         public int Id { get; set; }
         public string Name { get; set; }
-        [JsonIgnore]
         public byte[] PasswordHash { get; set; }
-        [JsonIgnore]
         public byte[] PasswordSalt { get; set; }
         public string Phone { get; set; }
         public string Email { get; set; }
@@ -37,12 +35,12 @@ namespace Api.Models
         public bool IsAccuracy { get; set; }
         public int? SpecialtyId { get; set; }
         public int? LevelId { get; set; }
+        public string ProvineId { get; set; }
         public bool? OnReady { get; set; }
-        public int? FormOfWorkId { get; set; }
         public string AvatarUrl { get; set; }
 
-        public virtual FormOfWork FormOfWork { get; set; }
         public virtual Level Level { get; set; }
+        public virtual Province Provine { get; set; }
         public virtual Role Role { get; set; }
         public virtual Specialty Specialty { get; set; }
         public virtual ICollection<CapacityProfile> CapacityProfiles { get; set; }
@@ -53,6 +51,7 @@ namespace Api.Models
         public virtual ICollection<Message> MessageReceives { get; set; }
         public virtual ICollection<Message> MessageSenders { get; set; }
         public virtual ICollection<OfferHistory> OfferHistories { get; set; }
-        public virtual ICollection<Rating> Ratings { get; set; }
+        public virtual ICollection<Rating> RatingFreelancers { get; set; }
+        public virtual ICollection<Rating> RatingRenters { get; set; }
     }
 }

@@ -17,7 +17,6 @@ namespace Api.Enities
         public int SpecialtyId { get; set; }
         public int LevelId { get; set; }
         public bool OnReady { get; set; }
-        public int FormOfWorkId { get; set; }
         public List<ResponseIdName> Skills { get; set; }
         public List<ResponseIdName> Services { get; set; }
     }
