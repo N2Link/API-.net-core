@@ -16,6 +16,7 @@ namespace Api.Enities
         public string Website { get; set; }
         public int SpecialtyId { get; set; }
         public int LevelId { get; set; }
+        public string ProvinceID { get; set; }
         public bool OnReady { get; set; }
         public List<ResponseIdName> Skills { get; set; }
         public List<ResponseIdName> Services { get; set; }

@@ -50,7 +50,7 @@ namespace Api.Controllers
             catch (Exception)
             {
 
-                throw;
+                return Ok();
             }
 
         }

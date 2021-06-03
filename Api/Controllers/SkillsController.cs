@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Api.Enities;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Api.Controllers
 {
@@ -23,14 +24,39 @@ namespace Api.Controllers
             _context = context;
         }
 
-        // GET: api/Skills
+
+        // GET:
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ResponseIdName>>> GetSkills()
         {
-            return await _context.Skills.Select(p=> new ResponseIdName(p)).ToListAsync();
+            return await _context.Skills
+                .Where(p => p.IsActive == true)
+                .Select(p => new ResponseIdName(p)).ToListAsync();
         }
-
-        // GET: api/Skills/5
+        [HttpGet("adminmode")]
+        public async Task<ActionResult<IEnumerable<Skill>>> GetSkillsadmin()
+        {
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var admin = await _context.Accounts
+                .SingleOrDefaultAsync(p => p.Email == email && p.RoleId == 1);
+            if (admin == null) { return BadRequest(); }
+            return await _context.Skills
+                .Select(p => new Skill()
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    IsActive = p.IsActive
+                }).ToListAsync();
+        }
+        // GET: api/Services/5
         [HttpGet("{id}")]
         public async Task<ActionResult<ResponseIdName>> GetSkill(int id)
         {
@@ -44,17 +70,30 @@ namespace Api.Controllers
             return new ResponseIdName(skill);
         }
 
+
         // PUT: api/Skills/5
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutSkill(int id, Skill skill)
+        public async Task<IActionResult> PutSkill(int id, [FromBody] string name)
         {
-            if (id != skill.Id)
-            {
-                return BadRequest();
-            }
+            var skill = await _context.Skills.FindAsync(id);
+            if (skill == null) { BadRequest(); }
 
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var admin = await _context.Accounts
+                .SingleOrDefaultAsync(p => p.Email == email && p.RoleId == 1);
+            if (admin == null) { return BadRequest(); }
+
+            skill.Name = name;
             _context.Entry(skill).State = EntityState.Modified;
 
             try
@@ -80,25 +119,51 @@ namespace Api.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPost]
-        public async Task<ActionResult<Skill>> PostSkill(Skill skill)
+        public async Task<ActionResult<Skill>> PostSkill([FromBody] string name)
         {
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var admin = await _context.Accounts
+                .SingleOrDefaultAsync(p => p.Email == email && p.RoleId == 1);
+            if (admin == null) { return BadRequest(); }
+            Skill skill = new Skill() { Name = name, IsActive= true };
             _context.Skills.Add(skill);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetSkill", new { id = skill.Id }, skill);
+            return Ok(skill);
         }
 
         // DELETE: api/Skills/5
         [HttpDelete("{id}")]
         public async Task<ActionResult<Skill>> DeleteSkill(int id)
         {
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var admin = await _context.Accounts
+                .SingleOrDefaultAsync(p => p.Email == email && p.RoleId == 1);
+            if (admin == null) { return BadRequest(); }
+
             var skill = await _context.Skills.FindAsync(id);
             if (skill == null)
             {
                 return NotFound();
             }
 
-            _context.Skills.Remove(skill);
+            skill.IsActive = false;
             await _context.SaveChangesAsync();
 
             return skill;

@@ -8,6 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Api.Enities;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Hosting;
+using System.IO;
 
 namespace Api.Controllers
 {
@@ -17,10 +20,14 @@ namespace Api.Controllers
     public class SpecialtiesController : ControllerBase
     {
         private readonly FreeLancerVNContext _context;
+        private IWebHostEnvironment _webHostEnvironment;
+        private string rootpath;
 
-        public SpecialtiesController(FreeLancerVNContext context)
+        public SpecialtiesController(FreeLancerVNContext context, IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
+            _webHostEnvironment = webHostEnvironment;
+            rootpath = _webHostEnvironment.WebRootPath;
         }
 
         // GET: api/Specialties
@@ -28,6 +35,7 @@ namespace Api.Controllers
         public async Task<ActionResult<IEnumerable<Specialty>>> GetSpecialties()
         {
             return await _context.Specialties
+                .Where(p=>p.IsActive ==true)
                 .Select(p=>new Specialty()
                 {
                     Id = p.Id,
@@ -37,6 +45,47 @@ namespace Api.Controllers
                 .ToListAsync();
         }
 
+        [HttpGet("adminmode")]
+        public async Task<ActionResult<IEnumerable<Specialty>>> GetSpecialtiesadmin()
+        {
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var admin = await _context.Accounts.SingleOrDefaultAsync(p => p.Email == email && p.RoleId == 1);
+            if (admin == null) { return BadRequest(); }
+            return await _context.Specialties
+                .Select(p => new Specialty()
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Image = p.Image
+                }).ToListAsync();
+        }
+        //GET Specialtys
+        [HttpGet("{id}/services")]
+        public async Task<ActionResult<List<ResponseIdName>>> GetSpecialyu(int id)
+        {
+            var specialty = await _context.Specialties
+                .Include(p => p.SpecialtyServices)
+                .ThenInclude(p => p.Service).SingleOrDefaultAsync(p => p.Id == id);
+
+            if (specialty == null)
+            {
+                return NotFound();
+            }
+            var services = specialty.SpecialtyServices
+                .Select(p => p.Service).Where(p => p.IsActive == true)
+                .Select(p => new ResponseIdName(p)).ToList();
+
+            return services;
+        }
+        
         // GET: api/Specialties/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Specialty>> GetSpecialty(int id)
@@ -56,14 +105,28 @@ namespace Api.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutSpecialty(int id, Specialty specialty)
+        public async Task<IActionResult> PutSpecialty(int id, SpecialtyPModel specialtyPutModel)
         {
-            if (id != specialty.Id)
+            var specialty = _context.Specialties.Find(id);
+
+            try
             {
-                return BadRequest();
+                System.IO.File.Delete(rootpath + specialty.Image);
+            }
+            catch (Exception){}
+            string newURL = "\\Images\\" +specialtyPutModel.Image.Name+"_"+specialty.Id;
+
+            using (FileStream fs = System.IO.File.Create(rootpath + newURL))
+            {
+                fs.Close();
+                System.IO.File.WriteAllBytes(rootpath + newURL, 
+                    Convert.FromBase64String(specialtyPutModel.Image.ImageBase64));
+
             }
 
-            _context.Entry(specialty).State = EntityState.Modified;
+            specialty.Name = specialtyPutModel.Name;
+            specialty.Image = newURL;
+            _context.Entry(specialtyPutModel).State = EntityState.Modified;
 
             try
             {
@@ -88,12 +151,23 @@ namespace Api.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPost]
-        public async Task<ActionResult<Specialty>> PostSpecialty(Specialty specialty)
+        public async Task<ActionResult<Specialty>> PostSpecialty(SpecialtyPModel specialtyPostModel)
         {
+            var specialty = new Specialty() { Name = specialtyPostModel.Name };
             _context.Specialties.Add(specialty);
             await _context.SaveChangesAsync();
+            string newURL = "\\Images\\" + specialtyPostModel.Image.Name + "_" + specialty.Id;
+            using (FileStream fs = System.IO.File.Create(rootpath + newURL))
+            {
+                fs.Close();
+                System.IO.File.WriteAllBytes(rootpath + newURL,
+                    Convert.FromBase64String(specialtyPostModel.Image.ImageBase64));
+            }
+            specialty.Name = specialtyPostModel.Name;
+            specialty.Image = newURL;
+            await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetSpecialty", new { id = specialty.Id }, specialty);
+            return specialty;
         }
 
         // DELETE: api/Specialties/5
@@ -106,7 +180,7 @@ namespace Api.Controllers
                 return NotFound();
             }
 
-            _context.Specialties.Remove(specialty);
+            specialty.IsActive = false;
             await _context.SaveChangesAsync();
 
             return specialty;

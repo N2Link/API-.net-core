@@ -9,6 +9,8 @@ namespace Api.Models
     {
         public Account()
         {
+            AnnouncementAccounts = new HashSet<AnnouncementAccount>();
+            BankAccounts = new HashSet<BankAccount>();
             CapacityProfiles = new HashSet<CapacityProfile>();
             FreelancerServices = new HashSet<FreelancerService>();
             FreelancerSkills = new HashSet<FreelancerSkill>();
@@ -19,6 +21,7 @@ namespace Api.Models
             OfferHistories = new HashSet<OfferHistory>();
             RatingFreelancers = new HashSet<Rating>();
             RatingRenters = new HashSet<Rating>();
+            Reports = new HashSet<Report>();
         }
 
         public int Id { get; set; }
@@ -35,14 +38,18 @@ namespace Api.Models
         public bool IsAccuracy { get; set; }
         public int? SpecialtyId { get; set; }
         public int? LevelId { get; set; }
-        public string ProvineId { get; set; }
+        public string ProvinceId { get; set; }
         public bool? OnReady { get; set; }
         public string AvatarUrl { get; set; }
+        public DateTime CreatedAtDate { get; set; }
+        public DateTime? BannedAtDate { get; set; }
 
         public virtual Level Level { get; set; }
-        public virtual Province Provine { get; set; }
+        public virtual Province Province { get; set; }
         public virtual Role Role { get; set; }
         public virtual Specialty Specialty { get; set; }
+        public virtual ICollection<AnnouncementAccount> AnnouncementAccounts { get; set; }
+        public virtual ICollection<BankAccount> BankAccounts { get; set; }
         public virtual ICollection<CapacityProfile> CapacityProfiles { get; set; }
         public virtual ICollection<FreelancerService> FreelancerServices { get; set; }
         public virtual ICollection<FreelancerSkill> FreelancerSkills { get; set; }
@@ -53,5 +60,6 @@ namespace Api.Models
         public virtual ICollection<OfferHistory> OfferHistories { get; set; }
         public virtual ICollection<Rating> RatingFreelancers { get; set; }
         public virtual ICollection<Rating> RatingRenters { get; set; }
+        public virtual ICollection<Report> Reports { get; set; }
     }
 }

@@ -25,6 +25,11 @@ namespace Api.Enities
         {
             this.Id = skill.Id;
             this.Name = skill.Name;
+        }          
+        public ResponseIdName(Job job)
+        {
+            this.Id = job.Id;
+            this.Name = job.Name;
         }  
         public ResponseIdName(Account account)
         {

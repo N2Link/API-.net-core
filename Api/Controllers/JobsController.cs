@@ -172,22 +172,103 @@ namespace Api.Controllers
             var jobresponse = new JobResponseModel(job);            
             return jobresponse;
         }
+        
 
         // PUT: api/Jobs/5
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutJob(int id, JobPostModel jobEditModel)
+        //[HttpPut("{id}")]
+        //public async Task<IActionResult> PutJob(int id, JobPostModel jobEditModel)
+        //{
+        //    Job job = _context.Jobs.Find(id);
+        //    if(job == null)
+        //    {
+        //        return BadRequest();
+        //    }
+        //    if (jobEditModel.Deadline <= DateTime.Now)
+        //    {
+        //        return BadRequest(new { message = "DateTime Invalid" });
+        //    }
+        //    String jwt = Request.Headers["Authorization"];
+        //    jwt = jwt.Substring(7);
+        //    //Decode jwt and get payload
+        //    var stream = jwt;
+        //    var handler = new JwtSecurityTokenHandler();
+        //    var jsonToken = handler.ReadToken(stream);
+        //    var tokenS = jsonToken as JwtSecurityToken;
+        //    //I can get Claims using:
+        //    var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+
+        //    var renter = await _context.Accounts
+        //        .SingleOrDefaultAsync(p => p.Email == email);
+        //    if (renter == null)
+        //    {
+        //        return BadRequest();
+        //    }
+        //    if (job.RenterId != renter.Id)
+        //    {
+        //        return BadRequest();
+        //    }
+
+        //    job.Name = jobEditModel.Name;
+        //    job.Details = jobEditModel.Details;
+        //    job.TypeId = jobEditModel.TypeId;
+        //    job.FormId = jobEditModel.FormId;
+        //    job.PayformId = jobEditModel.PayformId;
+        //    job.Deadline = jobEditModel.Deadline;
+        //    job.Floorprice = jobEditModel.Floorprice;
+        //    job.Cellingprice = jobEditModel.Cellingprice;
+        //    job.IsPrivate = jobEditModel.IsPrivate;
+        //    job.SpecialtyId = jobEditModel.SpecialtyId;
+        //    job.ServiceId = jobEditModel.ServiceId;
+        //    job.ProvinceId = jobEditModel.ProvinceId;
+        //    job.Status = "Waiting";
+
+        //    var arrayRemove = _context.JobSkills.Where(p => p.JobId == id).ToArray();
+        //    _context.JobSkills.RemoveRange(arrayRemove);
+        //    await _context.SaveChangesAsync();
+        //    foreach (var item in jobEditModel.Skills)
+        //    {
+        //       await _context.JobSkills.AddAsync(new JobSkill() 
+        //       { 
+        //           JobId = id,
+        //           SkillId = item.Id 
+        //       });
+        //    }
+
+        //    try
+        //    {
+        //        await _context.SaveChangesAsync();
+        //    }
+        //    catch (DbUpdateConcurrencyException)
+        //    {
+        //        if (!JobExists(id))
+        //        {
+        //            return NotFound();
+        //        }
+        //        else
+        //        {
+        //            throw;
+        //        }
+        //    }
+
+        //    return Ok();
+        //}
+        
+        //get offerhistory
+        [HttpGet("{id}/offerhistorys")]
+        public ActionResult<List<OfferHistoryResponse>> GetJobOfferHistories(int id)
         {
-            Job job = _context.Jobs.Find(id);
-            if(job == null)
+            var job = _context.Jobs
+                .Include(p => p.Freelancer).ThenInclude(p => p.RatingFreelancers).AsSplitQuery()
+                .Include(p => p.OfferHistories)
+                .SingleOrDefault(p => p.Id == id);
+            if (job == null)
             {
-                return BadRequest();
+                return NotFound();
             }
-            if (jobEditModel.Deadline <= DateTime.Now)
-            {
-                return BadRequest(new { message = "DateTime Invalid" });
-            }
+            var account = job.Renter;
+
             String jwt = Request.Headers["Authorization"];
             jwt = jwt.Substring(7);
             //Decode jwt and get payload
@@ -198,43 +279,40 @@ namespace Api.Controllers
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
 
-            var renter = await _context.Accounts
-                .SingleOrDefaultAsync(p => p.Email == email);
-            if (renter == null)
+            if (account.Email != email)
             {
                 return BadRequest();
             }
-            if (job.RenterId != renter.Id)
+            return job.OfferHistories.Select(p => new OfferHistoryResponse(p, 2)).ToList();
+        }
+        //PUT STATUS
+        //put inprogress
+        [HttpPut("{id}/offerhistory/{freelancerid}/choose")]
+        public async Task<IActionResult> PutOfferHistory(int id, int freelancerid)
+        {
+            Job job = await _context.Jobs
+                .Include(p => p.OfferHistories).ThenInclude(p => p.Freelancer)
+                .Include(p => p.Renter)
+                .SingleOrDefaultAsync(p => p.Id == id);
+            if (job == null) { NotFound(); }
+
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var account = job.Renter;
+            if (account.Email != email)
             {
                 return BadRequest();
             }
-
-            job.Name = jobEditModel.Name;
-            job.Details = jobEditModel.Details;
-            job.TypeId = jobEditModel.TypeId;
-            job.FormId = jobEditModel.FormId;
-            job.PayformId = jobEditModel.PayformId;
-            job.Deadline = jobEditModel.Deadline;
-            job.Floorprice = jobEditModel.Floorprice;
-            job.Cellingprice = jobEditModel.Cellingprice;
-            job.IsPrivate = jobEditModel.IsPrivate;
-            job.SpecialtyId = jobEditModel.SpecialtyId;
-            job.ServiceId = jobEditModel.ServiceId;
-            job.ProvinceId = jobEditModel.ProvinceId;
-            job.Status = "Waiting";
-
-            var arrayRemove = _context.JobSkills.Where(p => p.JobId == id).ToArray();
-            _context.JobSkills.RemoveRange(arrayRemove);
-            await _context.SaveChangesAsync();
-            foreach (var item in jobEditModel.Skills)
-            {
-               await _context.JobSkills.AddAsync(new JobSkill() 
-               { 
-                   JobId = id,
-                   SkillId = item.Id 
-               });
-            }
-
+            job.Status = "In progress";
+            job.FreelancerId = freelancerid;
+            _context.Entry(job).State = EntityState.Modified;
             try
             {
                 await _context.SaveChangesAsync();
@@ -250,16 +328,46 @@ namespace Api.Controllers
                     throw;
                 }
             }
-
             return Ok();
         }
-        [HttpPut("done/{id}")]
+        //Get messages
+        [HttpGet("{id}/messages")]
+        public ActionResult<List<MessageResponse>> Getmessages(int id)
+        {
+            var job = _context.Jobs
+                .Include(p=>p.Messages).ThenInclude(p=>p.Sender)
+                .Include(p=>p.Messages).ThenInclude(p=>p.Receive)
+                .SingleOrDefault(p => p.Id == id);
+            if (job == null)
+            {
+                return NotFound();
+            }
+            var account = job.Renter;
+
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+
+            if (account.Email != email)
+            {
+                return BadRequest();
+            }
+            return job.Messages.Select(p=>new MessageResponse(p)).ToList();
+        }
+        //put done
+        [HttpPut("{id}/done")]
         public async Task<ActionResult> DoneJob(int id)
         {
             var job = _context.Jobs.Find(id);
             if(job == null)
             {
-                return BadRequest(new { message = "Job dont exits" });
+                return NotFound();
             }
             String jwt = Request.Headers["Authorization"];
             jwt = jwt.Substring(7);
@@ -282,14 +390,13 @@ namespace Api.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }      
-
-        [HttpPut("cancel/{id}")]
+        [HttpPut("{id}/cancel")]
         public async Task<ActionResult> CancelJob(int id)
         {
             var job = _context.Jobs.Find(id);
             if(job == null)
             {
-                return BadRequest(new { message = "Job dont exits" });
+                return NotFound();
             }
             String jwt = Request.Headers["Authorization"];
             jwt = jwt.Substring(7);
@@ -350,6 +457,7 @@ namespace Api.Controllers
                 SpecialtyId = jobPostModel.SpecialtyId,
                 ProvinceId = jobPostModel.ProvinceId,
                 ServiceId = jobPostModel.ServiceId,
+                CreateAt = DateTime.Now,
                 Status = "Waiting",
             };
             _context.Jobs.Add(job);
@@ -377,23 +485,6 @@ namespace Api.Controllers
                 .SingleOrDefaultAsync(p => p.Id == job.Id);
             return Ok(new JobResponseModel(job));
         }
-
-        // DELETE: api/Jobs/5
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<Job>> DeleteJob(int id)
-        {
-            var job = await _context.Jobs.FindAsync(id);
-            if (job == null)
-            {
-                return NotFound();
-            }
-
-            _context.Jobs.Remove(job);
-            await _context.SaveChangesAsync();
-
-            return job;
-        }
-
         private bool JobExists(int id)
         {
             return _context.Jobs.Any(e => e.Id == id);

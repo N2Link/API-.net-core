@@ -32,6 +32,16 @@ namespace Api.Controllers
                 .Include(p => p.Specialty)
                 .Include(p => p.RatingFreelancers)
                 .Include(p => p.Level)
+                .Where(p=>p.BannedAtDate==null)
+                .Select(p => new AccountForListResponse(p)).ToListAsync();
+        }  
+        [HttpGet("adminmode")]
+        public async Task<ActionResult<IEnumerable<AccountForListResponse>>> GetAllAccounts()
+        {
+            return await _context.Accounts
+                .Include(p => p.Specialty)
+                .Include(p => p.RatingFreelancers)
+                .Include(p => p.Level)
                 .Select(p => new AccountForListResponse(p)).ToListAsync();
         }
 /*        [HttpGet("search")]
@@ -40,98 +50,305 @@ namespace Api.Controllers
             var list = _context.Accounts.Where(p => p.Name.Contains(search));
         }*/
 
-        [HttpGet("pagination")]
-        public async Task<ActionResult> GetPagination(int page, int count)
+        //Get listjob cho freelancer
+        [HttpGet("{id}/jobfreelancers")]
+        public async Task<ActionResult<IEnumerable<JobForListResponse>>> Getjobfreelancers(int id)
         {
-            var list = await _context.Accounts
-                .Include(p => p.JobFreelancers)
-                .Include(p => p.FreelancerSkills).ThenInclude(p => p.Skill)
-                .Include(p => p.FreelancerServices).ThenInclude(p => p.Service)
-                .Include(p => p.Specialty)
-                .Include(p => p.Role)
-                .Include(p => p.RatingFreelancers)
-                .Include(p => p.Level)
-                .ToListAsync();
-            try
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var account = await _context.Accounts
+                .Include(p=>p.JobFreelancers).ThenInclude(p=>p.Renter)
+                .SingleOrDefaultAsync(p => p.Id == id && p.Email == email);
+            if (account == null)
             {
-                return PaginationAccount(page, count, list);
+                return NotFound();
             }
-            catch (AppException ex)
+            var jobFreelancers = account.JobFreelancers.Select(p=> new JobForListResponse(p)).ToList();
+            return jobFreelancers;
+        }             
+        [HttpGet("{id}/jobfreelancers/inprogress")]
+        public async Task<ActionResult<IEnumerable<JobForListResponse>>> Getjobfreelancerswaiting(int id)
+        {
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var account = await _context.Accounts
+                .Include(p=>p.JobFreelancers).ThenInclude(p=>p.Renter)
+                .SingleOrDefaultAsync(p => p.Id == id && p.Email == email);
+            if (account == null)
             {
+                return NotFound();
+            }
+            var jobFreelancers = account.JobFreelancers
+                .Where(p=>p.Status == "In progress")
+                .Select(p=> new JobForListResponse(p)).ToList();
+            return jobFreelancers;
+        }      
 
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-        private ActionResult PaginationAccount(int page, int count, List<Account> list)
+
+        [HttpGet("{id}/jobfreelancers/past")]
+        public async Task<ActionResult<IEnumerable<JobForListResponse>>> Getjobfreelancerspast(int id)
         {
-            page -= 1;
-            if (count * page > list.Count)
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var account = await _context.Accounts
+                .Include(p => p.JobFreelancers).ThenInclude(p => p.Renter)
+                .SingleOrDefaultAsync(p => p.Id == id && p.Email == email);
+            if (account == null)
             {
-                throw new AppException("Overpage");
+                return NotFound();
             }
-            List<Account> accounts = new List<Account>();
-            for (int i = count * page; i < count * page + count; i++)
+            var jobFreelancers = account.JobFreelancers
+                .Where(p=>p.Deadline<=DateTime.Now && p.Status != "Waiting")
+                .Select(p=> new JobForListResponse(p)).ToList();
+            return jobFreelancers;
+        }       
+
+        //get list job renter
+        [HttpGet("{id}/jobrenters")]
+        public async Task<ActionResult<IEnumerable<JobForListResponse>>> Getjobrenters(int id)
+        {
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var account = await _context.Accounts
+                .Include(p => p.JobRenters)
+                .ThenInclude(p => p.Freelancer)
+                .SingleOrDefaultAsync(p => p.Id == id && p.Email == email);
+            if (account == null)
             {
-                if (count * page + i > list.Count - 1)
-                {
-                    break;
-                }
-                accounts.Add(list[i]);
+                return NotFound();
             }
-            return Ok(new
+            var JobRenters = account.JobRenters.Select(p=> new JobForListResponse(p)).ToList();
+            return JobRenters;
+        } 
+        [HttpGet("{id}/jobrenters/waiting")]
+        public async Task<ActionResult<IEnumerable<JobForListResponse>>> Getjobrenterswaiting(int id)
+        {
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var account = await _context.Accounts
+                .Include(p => p.JobRenters)
+                .ThenInclude(p => p.Freelancer)
+                .SingleOrDefaultAsync(p => p.Id == id && p.Email == email);
+            if (account == null)
             {
-                amount = list.Count(),
-                page = Math.Ceiling(Decimal.Parse(list.Count.ToString()) /
-                    Decimal.Parse(count.ToString())) + 1,
-                list = accounts.Select(p => new AccountResponseModel(p, true)).ToList()
-            });
+                return NotFound();
+            }
+            var JobRenters = account.JobRenters
+                .Where(p=>p.Deadline<=DateTime.Now && p.Status =="Waiting")
+                .Select(p=> new JobForListResponse(p)).ToList();
+            return JobRenters;
+        }    
+        [HttpGet("{id}/jobrenters/inprogress")]
+        public async Task<ActionResult<IEnumerable<JobForListResponse>>> Getjobrentersinprogress(int id)
+        {
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var account = await _context.Accounts
+                .Include(p => p.JobRenters)
+                .ThenInclude(p => p.Freelancer)
+                .SingleOrDefaultAsync(p => p.Id == id && p.Email == email);
+            if (account == null)
+            {
+                return NotFound();
+            }
+            var JobRenters = account.JobRenters
+                .Where(p=>p.Deadline<=DateTime.Now && p.Status =="In progress")
+                .Select(p=> new JobForListResponse(p)).ToList();
+            return JobRenters;
+        }    
+        [HttpGet("{id}/jobrenters/past")]
+        public async Task<ActionResult<IEnumerable<JobForListResponse>>> Getjobrenterspast(int id)
+        {
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var account = await _context.Accounts
+                .Include(p => p.JobRenters)
+                .ThenInclude(p => p.Freelancer)
+                .SingleOrDefaultAsync(p => p.Id == id && p.Email == email);
+            if (account == null)
+            {
+                return NotFound();
+            }
+            var JobRenters = account.JobRenters
+                .Where(p=>p.Deadline>DateTime.Now || 
+                (p.Status!="Waiting"&&p.Status!="In progress"))
+                .Select(p=> new JobForListResponse(p)).ToList();
+            return JobRenters;
         }
+        //get ratings freelancer
+        [HttpGet("{id}/ratings")]
+        public async Task<ActionResult<IEnumerable<RatingResponse>>> GetRatingsfreelancer(int id)
+        {
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+
+            var account = await _context.Accounts
+                .Include(p=>p.RatingFreelancers).ThenInclude(p=>p.Renter)
+                .Include(p=>p.RatingFreelancers).ThenInclude(p=>p.Job)
+                .SingleOrDefaultAsync(p => p.Email == email && p.Id ==id);
+            if (account == null) { return NotFound(); }
+            return account.RatingFreelancers
+                .Select(p => new RatingResponse(p)).ToList();
+        }
+        //get skill
+        [HttpGet("{id}/skills")]
+        public async Task<ActionResult<IEnumerable<ResponseIdName>>> GetFreelancerSkills(int id)
+        {
+            Account account = await _context.Accounts
+                .Include(p=>p.FreelancerSkills).ThenInclude(p=>p.Skill)
+                .SingleOrDefaultAsync(p=>p.Id ==id);
+            if (account == null) { return NotFound(); }
+            var skills = account.FreelancerSkills
+                .Select(p => new ResponseIdName {Id = p.Skill.Id, Name = p.Skill.Name}).ToList();
+            return skills;
+        }
+        //get service
+        [HttpGet("{id}/services")]
+        public async Task<ActionResult<IEnumerable<ResponseIdName>>> GetFreelancerServices(int id)
+        {
+            Account account = await _context.Accounts
+                .Include(p=>p.FreelancerServices).ThenInclude(p=>p.Service)
+                .SingleOrDefaultAsync(p=>p.Id ==id);
+            if (account == null) { return NotFound(); }
+            var service = account.FreelancerServices
+                .Select(p => new ResponseIdName {Id = p.Service.Id, Name = p.Service.Name}).ToList();
+            return service;
+        }
+        //get offerhistory 
+        [HttpGet("{id}/offerhistorys")]
+        public ActionResult<List<OfferHistoryResponse>> GetFreelancerOfferHistories(int id)
+        {
+            var account = _context.Accounts
+                .Include(p => p.OfferHistories).ThenInclude(p => p.Job).ThenInclude(p=>p.Renter)
+                .SingleOrDefault(p => p.Id == id);
+            if (account == null)
+            {
+                return NotFound();
+            }
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            if (account.Email != email)
+            {
+                return BadRequest();
+            }
+            return account.OfferHistories.Select(p => new OfferHistoryResponse(p, 1)).ToList();
+        }        
+        //[HttpGet("pagination")]
+                 //public async Task<ActionResult> GetPagination(int page, int count)
+                 //{
+                 //    var list = await _context.Accounts
+                 //        .Include(p => p.JobFreelancers)
+                 //        .Include(p => p.FreelancerSkills).ThenInclude(p => p.Skill)
+                 //        .Include(p => p.FreelancerServices).ThenInclude(p => p.Service)
+                 //        .Include(p => p.Specialty)
+                 //        .Include(p => p.Role)
+                 //        .Include(p => p.RatingFreelancers)
+                 //        .Include(p => p.Level)
+                 //        .ToListAsync();
+                 //    try
+                 //    {
+                 //        return PaginationAccount(page, count, list);
+                 //    }
+                 //    catch (AppException ex)
+                 //    {
+
+        //        return BadRequest(new { message = ex.Message });
+        //    }
+        //}
+        //private ActionResult PaginationAccount(int page, int count, List<Account> list)
+        //{
+        //    page -= 1;
+        //    if (count * page > list.Count)
+        //    {
+        //        throw new AppException("Overpage");
+        //    }
+        //    List<Account> accounts = new List<Account>();
+        //    for (int i = count * page; i < count * page + count; i++)
+        //    {
+        //        if (count * page + i > list.Count - 1)
+        //        {
+        //            break;
+        //        }
+        //        accounts.Add(list[i]);
+        //    }
+        //    return Ok(new
+        //    {
+        //        amount = list.Count(),
+        //        page = Math.Ceiling(Decimal.Parse(list.Count.ToString()) /
+        //            Decimal.Parse(count.ToString())) + 1,
+        //        list = accounts.Select(p => new AccountResponseModel(p, true)).ToList()
+        //    });
+        //}
 
         // GET: api/Accounts/5
+
         [HttpGet("{id}")]
         public async Task<ActionResult<AccountResponseModel>> GetAccount(int id)
         {
             var account = await _context.Accounts
-                .Include(p => p.JobRenters)
-                .ThenInclude(p => p.S).ThenInclude(p => p.Service)
-                .AsSplitQuery()
-                .Include(p => p.JobRenters)
-                .ThenInclude(p => p.S).ThenInclude(p => p.Specialty)
-                .AsSplitQuery()
-                .Include(p => p.JobRenters)
-                .ThenInclude(p => p.Form)
-                .AsSplitQuery()
-                .Include(p => p.JobRenters)
-                .ThenInclude(p => p.Type)
-                .AsSplitQuery()
-                .Include(p => p.JobRenters)
-                .ThenInclude(p => p.Payform)
-                .AsSplitQuery()
-                .Include(p => p.JobRenters)
-                .ThenInclude(p => p.JobSkills).ThenInclude(p => p.Skill)
-                .AsSplitQuery()
-
-
-                .Include(p => p.JobFreelancers)
-                .ThenInclude(p => p.S).ThenInclude(p => p.Service)
-                .AsSplitQuery()
-                .Include(p => p.JobFreelancers)
-                .ThenInclude(p => p.S).ThenInclude(p => p.Specialty)
-                .AsSplitQuery()
-                .Include(p => p.JobFreelancers)
-                .ThenInclude(p => p.Form)
-                .AsSplitQuery()
-                .Include(p => p.JobFreelancers)
-                .ThenInclude(p => p.Type)
-                .AsSplitQuery()
-                .Include(p => p.JobFreelancers)
-                .ThenInclude(p => p.Payform)
-                .AsSplitQuery()
-                .Include(p => p.JobFreelancers)
-                .ThenInclude(p => p.JobSkills).ThenInclude(p => p.Skill)
-                .AsSplitQuery()
-
-
                 .Include(p => p.FreelancerSkills).ThenInclude(p => p.Skill)
                 .AsSplitQuery()
                 .Include(p => p.FreelancerServices).ThenInclude(p => p.Service)
@@ -143,6 +360,8 @@ namespace Api.Controllers
                 .Include(p => p.RatingFreelancers)
                 .AsSplitQuery()
                 .Include(p => p.Level)
+                .AsSplitQuery()
+                .Include(p => p.Province)
                 .AsSplitQuery()
                 .Include(p => p.OfferHistories)
                 .AsSplitQuery()
@@ -165,7 +384,11 @@ namespace Api.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutAccount(int id, AccountEditModel accountEditModel)
         {
-
+            var account = _context.Accounts.Find(id);
+            if (account == null)
+            {
+                return NotFound();
+            }
             String jwt = Request.Headers["Authorization"];
             jwt = jwt.Substring(7);
             //Decode jwt and get payload
@@ -175,8 +398,7 @@ namespace Api.Controllers
             var tokenS = jsonToken as JwtSecurityToken;
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
-            var account = _context.Accounts.Find(id);
-            if (account == null || account.Email != email)
+            if (account.Email != email)
             {
                 return BadRequest();
             }
@@ -189,14 +411,14 @@ namespace Api.Controllers
             account.Website = accountEditModel.Website;
             account.SpecialtyId = accountEditModel.SpecialtyId;
             account.LevelId = accountEditModel.LevelId;
-            account.OnReady = accountEditModel.OnReady;
-
+            account.ProvinceId = accountEditModel.ProvinceID;
             var arrSkillsRemove = _context.FreelancerSkills.Where(p => p.FreelancerId == account.Id).ToArray();
             var arrServicesRemove = _context.FreelancerServices.Where(p => p.FreelancerId == account.Id).ToArray();
 
             _context.FreelancerServices.RemoveRange(arrServicesRemove);
             _context.FreelancerSkills.RemoveRange(arrSkillsRemove);
             await _context.SaveChangesAsync();
+
             foreach (var item in accountEditModel.Skills)
             {
                 _context.FreelancerSkills.Add(new FreelancerSkill()
@@ -205,6 +427,7 @@ namespace Api.Controllers
                     SkillId = item.Id
                 });
             }
+
             foreach (var item in accountEditModel.Services)
             {
                 _context.FreelancerServices.Add(new FreelancerService()
@@ -213,6 +436,47 @@ namespace Api.Controllers
                     ServiceId = item.Id
                 });
             }
+            _context.Entry(account).State = EntityState.Modified;
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!AccountExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return Ok();
+        }        
+
+        [HttpPut("{id}/onready")]
+        public async Task<IActionResult> OnReady(int id)
+        {
+            var account = _context.Accounts.Find(id);
+            if (account == null)
+            {
+                return NotFound();
+            }
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            if (account == null || account.Email != email)
+            {
+                return BadRequest();
+            }
+            account.OnReady = !account.OnReady;
             _context.Entry(account).State = EntityState.Modified;
             try
             {
@@ -253,10 +517,9 @@ namespace Api.Controllers
             {
                 return NotFound();
             }
-
-            _context.Accounts.Remove(account);
+            account.BannedAtDate = DateTime.Now;
+            //_context.Accounts.Remove(account);
             await _context.SaveChangesAsync();
-
             return account;
         }
 
@@ -277,47 +540,6 @@ namespace Api.Controllers
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             var account = _context.Accounts
-                .Include(p => p.JobRenters)
-                .ThenInclude(p => p.S).ThenInclude(p => p.Service)
-                .AsSplitQuery()
-                .Include(p => p.JobRenters)
-                .ThenInclude(p => p.S).ThenInclude(p => p.Specialty)
-                .AsSplitQuery()
-                .Include(p => p.JobRenters)
-                .ThenInclude(p => p.Form)
-                .AsSplitQuery()
-                .Include(p => p.JobRenters)
-                .ThenInclude(p => p.Type)
-                .AsSplitQuery()
-                .Include(p => p.JobRenters)
-                .ThenInclude(p => p.Payform)
-                .AsSplitQuery()
-                .Include(p => p.JobRenters)
-                .ThenInclude(p => p.JobSkills).ThenInclude(p => p.Skill)
-                .AsSplitQuery()
-
-
-                .Include(p => p.JobFreelancers)
-                .ThenInclude(p => p.S).ThenInclude(p => p.Service)
-                .AsSplitQuery()
-                .Include(p => p.JobFreelancers)
-                .ThenInclude(p => p.S).ThenInclude(p => p.Specialty)
-                .AsSplitQuery()
-                .Include(p => p.JobFreelancers)
-                .ThenInclude(p => p.Form)
-                .AsSplitQuery()
-                .Include(p => p.JobFreelancers)
-                .ThenInclude(p => p.Type)
-                .AsSplitQuery()
-                .Include(p => p.JobFreelancers)
-                .ThenInclude(p => p.Payform)
-                .AsSplitQuery()
-                .Include(p => p.JobFreelancers)
-                .ThenInclude(p => p.JobSkills).ThenInclude(p => p.Skill)
-                .AsSplitQuery()
-                .AsSplitQuery()
-
-
                 .Include(p => p.FreelancerSkills).ThenInclude(p => p.Skill)
                 .AsSplitQuery()
                 .Include(p => p.FreelancerServices).ThenInclude(p => p.Service)
@@ -332,8 +554,12 @@ namespace Api.Controllers
                 .AsSplitQuery()
                 .Include(p => p.OfferHistories)
                 .AsSplitQuery()
+                .Include(p => p.Province)
+                .AsSplitQuery()
                 .Include(p => p.CapacityProfiles)
                 .ThenInclude(p => p.ProfileServices).ThenInclude(p => p.Service)
+                .AsSplitQuery()
+                .Include(p=>p.BankAccounts).ThenInclude(p=>p.Bank)
                 .AsSplitQuery()
                 .SingleOrDefault(p => p.Email == email);
 

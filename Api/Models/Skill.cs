@@ -15,6 +15,7 @@ namespace Api.Models
 
         public int Id { get; set; }
         public string Name { get; set; }
+        public bool IsActive { get; set; }
 
         public virtual ICollection<FreelancerSkill> FreelancerSkills { get; set; }
         public virtual ICollection<JobSkill> JobSkills { get; set; }

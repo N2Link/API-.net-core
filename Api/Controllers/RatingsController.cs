@@ -37,33 +37,6 @@ namespace Api.Controllers
                 Comment = p.Comment
             }).ToListAsync();
         }  
-        [HttpGet("listRatingFreelancer/{freelancerId}")]
-        public async Task<ActionResult<IEnumerable<Rating>>> GetlistRatingFreelancer(int freelancerId)
-        {
-            String jwt = Request.Headers["Authorization"];
-            jwt = jwt.Substring(7);
-            //Decode jwt and get payload
-            var stream = jwt;
-            var handler = new JwtSecurityTokenHandler();
-            var jsonToken = handler.ReadToken(stream);
-            var tokenS = jsonToken as JwtSecurityToken;
-            //I can get Claims using:
-            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
-
-            var freelancer = await _context.Accounts
-                .SingleOrDefaultAsync(p => p.Email == email);
-            if (freelancer.Id != freelancerId) { return BadRequest(); }
-            return await _context.Ratings
-                .Where(p => p.FreelancerId == freelancerId)
-                .Select(p=>new Rating() 
-                {
-                    Id = p.Id,
-                    FreelancerId = p.FreelancerId,
-                    RenterId = p.RenterId,
-                    Star = p.Star,
-                    Comment = p.Comment
-                }).ToListAsync();
-        }
 
         // GET: api/Ratings/5
         [HttpGet("{freelancerId}")]
@@ -92,7 +65,7 @@ namespace Api.Controllers
             Rating rating = _context.Ratings.Find(id);
             if (rating == null)
             {
-                return BadRequest();
+                return NotFound();
             }
 
             String jwt = Request.Headers["Authorization"];
@@ -107,12 +80,18 @@ namespace Api.Controllers
 
             var renter = await _context.Accounts
                 .SingleOrDefaultAsync(p => p.Email == email);
-
-            var check = renter.RatingRenters.SingleOrDefault(p => p.FreelancerId == ratingPost.FreelancerId);
-            if (check != null)
+            if (renter == null)
             {
-                return BadRequest(new { message = "Bạn đã đánh giá Freelancer này rồi" });
+                return BadRequest();
             }
+            var job = renter.JobRenters.SingleOrDefault(p => p.Id == ratingPost.JobID);
+
+            if (job == null)
+            {
+                return BadRequest();
+            }
+
+            rating.JobId = rating.JobId;
             rating.RenterId =renter.Id;
             rating.FreelancerId = ratingPost.FreelancerId;
             rating.Star = rating.Star;
@@ -140,14 +119,19 @@ namespace Api.Controllers
 
             var renter = await _context.Accounts
                 .SingleOrDefaultAsync(p => p.Email == email);
-
-            var check = renter.RatingRenters.SingleOrDefault(p =>p.FreelancerId == ratingPost.FreelancerId);
-            if (check != null)
+            if (renter == null)
             {
-                return BadRequest(new { message = "Bạn đã đánh giá Freelancer này rồi" });
+                return BadRequest();
+            }
+            var job = renter.JobRenters.SingleOrDefault(p => p.Id == ratingPost.JobID);
+
+            if(job == null)
+            {
+                return BadRequest();
             }
             Rating rating = new Rating()
             {
+                JobId = ratingPost.JobID,
                 RenterId = renter.Id,
                 FreelancerId = ratingPost.FreelancerId,
                 Star = ratingPost.Star,

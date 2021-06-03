@@ -19,6 +19,7 @@ namespace Api.Enities
             try
             {
                 this.Services = capacityProfile.ProfileServices
+                            .Where(p=>p.Service.IsActive==true)
                             .Select(p => new ResponseIdName(p.Service)).ToList();
             }
             catch (Exception){}

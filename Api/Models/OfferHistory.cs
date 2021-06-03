@@ -13,7 +13,6 @@ namespace Api.Models
         public string ExpectedDay { get; set; }
         public string Description { get; set; }
         public string TodoList { get; set; }
-        public string Status { get; set; }
 
         public virtual Account Freelancer { get; set; }
         public virtual Job Job { get; set; }

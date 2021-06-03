@@ -25,6 +25,7 @@ namespace Api.Enities
             Payform = new ResponseIdName(job.Payform);
             FormOfWork = new ResponseIdName(job.Form);
             TypeOfWork = new ResponseIdName(job.Type);
+            CreateAt = job.CreateAt;
             Province = job.Province !=null? new ProvinceResponse(job.Province):null;
             Status = job.Status;
             Skills = job.JobSkills
@@ -33,6 +34,8 @@ namespace Api.Enities
         public int Id { get; set; }
         public string Name { get; set; }
         public DateTime Deadline { get; set; }
+        public DateTime CreateAt { get; set; }
+
         public string Details { get; set; }
         public ResponseIdName Renter { get; set; }
         public ResponseIdName Freelancer { get; set; }

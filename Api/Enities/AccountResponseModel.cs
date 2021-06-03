@@ -17,14 +17,15 @@ namespace Api.Enities
             Title = account.Tile;
             Description = account.Description;
             Website = account.Website;
-            Balance = account.Balance;
             OnReady = account.OnReady;
             AvatarUrl = account.AvatarUrl;
+            CreatedAtDate = account.CreatedAtDate;
+            BannedAtDate = account.BannedAtDate;
 
-            Role = account.Role==null? null: new ResponseIdName(account.Role);
+            Role = account.Role == null ? null : new ResponseIdName(account.Role);
             Level = account.LevelId == null ? null : new ResponseIdName(account.Level);
 
-            Specialty = account.SpecialtyId == null ? null 
+            Specialty = account.SpecialtyId == null ? null
                 : new ResponseIdName(account.Specialty);
 
             try
@@ -39,41 +40,33 @@ namespace Api.Enities
             try
             {
                 FreelancerServices = account.FreelancerServices
+                    .Where(p=>p.Service.IsActive==true)
                     .Select(p => new ResponseIdName(p.Service)).ToList();
             }
-            catch (Exception){}    
+            catch (Exception) { }
             try
             {
                 FreelancerSkills = account.FreelancerSkills
+                    .Where(p=>p.Skill.IsActive)
                     .Select(p => new ResponseIdName(p.Skill)).ToList();
             }
-            catch (Exception){}
+            catch (Exception) { }
 
-            try
-            {
-                this.JobRenters = account.JobRenters
-                    .Select(p => new JobResponseModel(p)).TakeLast(3).OrderByDescending(p => p.Id).ToList();
-            } catch (Exception) { }
-
-            try
-            {
-                this.JobFreelancerDone = account.JobFreelancers
-                    .Where(p=>p.Status == "Done")
-                    .Select(p => new JobResponseModel(p)).TakeLast(3).OrderByDescending(p=>p.Id).ToList(); 
-
-                this.JobFreelancerResume = account.JobFreelancers
-                    .Where(p=>p.Status == "In progress")
-                    .Select(p => new JobResponseModel(p)).TakeLast(3).OrderByDescending(p => p.Id).ToList();
-            }
-            catch (Exception){}
-
+            Province = account.ProvinceId!=null?account.Province:null;
             this.TotalRatingModel = new TotalRatingModel(account.RatingFreelancers.ToList());
 
-            if (isPrivate)
+            if (!isPrivate)
             {
-                this.Balance = null;
+                BankAccounts = account.BankAccounts.Select(p => new BankAccount()
+                {
+                    Bank = new Bank() { Id = p.Bank.Id, Name = p.Bank.Name },
+                    OwnerName = p.OwnerName,
+                    AccountNumber = p.AccountNumber,
+                    BranchName = p.BranchName
+                }).ToList();
+                Balance = account.Balance;
             }
-            this.Earning = account.JobFreelancers.Count > 0 ? account.JobFreelancers.Count:0;
+            this.Earning = account.JobFreelancers.Count > 0 ? account.JobFreelancers.Count : 0;
         }
 
         public int Id { get; set; }
@@ -87,16 +80,17 @@ namespace Api.Enities
         public int Earning { get; set; }
         public bool? OnReady { get; set; }
         public string AvatarUrl { get; set; }
+        public DateTime CreatedAtDate { get; set; }
+        public DateTime? BannedAtDate { get; set; }
 
         public virtual ResponseIdName Level { get; set; }
         public virtual ResponseIdName Role { get; set; }
         public virtual ResponseIdName Specialty { get; set; }
         public TotalRatingModel TotalRatingModel { get; set; }
+        public virtual List<BankAccount> BankAccounts { get; set; }
+        public Province Province { get; set; }
         public virtual ICollection<ResponseIdName> FreelancerServices { get; set; }
         public virtual ICollection<ResponseIdName> FreelancerSkills { get; set; }
         public virtual ICollection<CapacityProfileResponse> CapacityProfiles { get; set; }
-        public virtual ICollection<JobResponseModel> JobFreelancerResume { get; set; }
-        public virtual ICollection<JobResponseModel> JobFreelancerDone { get; set; }
-        public virtual ICollection<JobResponseModel> JobRenters { get; set; }
     }
 }

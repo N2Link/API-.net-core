@@ -16,7 +16,6 @@ namespace Api.Enities
             this.ExpectedDay = offerHistory.ExpectedDay;
             this.Description = offerHistory.Description;
             this.TodoList = offerHistory.TodoList;
-            this.Status = offerHistory.Status;
             try
             {
                 this.Freelancer = type ==2 ?new AccountForListResponse(offerHistory.Freelancer):null;

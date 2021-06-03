@@ -18,6 +18,10 @@ namespace Api.Models
         }
 
         public virtual DbSet<Account> Accounts { get; set; }
+        public virtual DbSet<Announcement> Announcements { get; set; }
+        public virtual DbSet<AnnouncementAccount> AnnouncementAccounts { get; set; }
+        public virtual DbSet<Bank> Banks { get; set; }
+        public virtual DbSet<BankAccount> BankAccounts { get; set; }
         public virtual DbSet<CapacityProfile> CapacityProfiles { get; set; }
         public virtual DbSet<FormOfWork> FormOfWorks { get; set; }
         public virtual DbSet<FreelancerService> FreelancerServices { get; set; }
@@ -31,6 +35,7 @@ namespace Api.Models
         public virtual DbSet<ProfileService> ProfileServices { get; set; }
         public virtual DbSet<Province> Provinces { get; set; }
         public virtual DbSet<Rating> Ratings { get; set; }
+        public virtual DbSet<Report> Reports { get; set; }
         public virtual DbSet<Role> Roles { get; set; }
         public virtual DbSet<Service> Services { get; set; }
         public virtual DbSet<Skill> Skills { get; set; }
@@ -61,6 +66,14 @@ namespace Api.Models
                     .IsRequired()
                     .HasMaxLength(200);
 
+                entity.Property(e => e.BannedAtDate)
+                    .HasColumnType("date")
+                    .HasColumnName("Banned_at_Date");
+
+                entity.Property(e => e.CreatedAtDate)
+                    .HasColumnType("date")
+                    .HasColumnName("Created_at_Date");
+
                 entity.Property(e => e.Description).HasMaxLength(500);
 
                 entity.Property(e => e.Email)
@@ -85,10 +98,10 @@ namespace Api.Models
                     .IsRequired()
                     .HasMaxLength(12);
 
-                entity.Property(e => e.ProvineId)
+                entity.Property(e => e.ProvinceId)
                     .HasMaxLength(5)
                     .IsUnicode(false)
-                    .HasColumnName("ProvineID");
+                    .HasColumnName("ProvinceID");
 
                 entity.Property(e => e.RoleId).HasColumnName("RoleID");
 
@@ -101,9 +114,9 @@ namespace Api.Models
                     .HasForeignKey(d => d.LevelId)
                     .HasConstraintName("FK_User_Level");
 
-                entity.HasOne(d => d.Provine)
+                entity.HasOne(d => d.Province)
                     .WithMany(p => p.Accounts)
-                    .HasForeignKey(d => d.ProvineId)
+                    .HasForeignKey(d => d.ProvinceId)
                     .HasConstraintName("FK_Account_Province");
 
                 entity.HasOne(d => d.Role)
@@ -116,6 +129,90 @@ namespace Api.Models
                     .WithMany(p => p.Accounts)
                     .HasForeignKey(d => d.SpecialtyId)
                     .HasConstraintName("FK_Account_Specialty");
+            });
+
+            modelBuilder.Entity<Announcement>(entity =>
+            {
+                entity.ToTable("Announcement");
+
+                entity.Property(e => e.Id).HasColumnName("ID");
+
+                entity.Property(e => e.Detail)
+                    .IsRequired()
+                    .HasMaxLength(500);
+
+                entity.Property(e => e.Title)
+                    .IsRequired()
+                    .HasMaxLength(50);
+            });
+
+            modelBuilder.Entity<AnnouncementAccount>(entity =>
+            {
+                entity.HasKey(e => new { e.AnnouncementId, e.AccountId });
+
+                entity.ToTable("AnnouncementAccount");
+
+                entity.Property(e => e.AnnouncementId).HasColumnName("AnnouncementID");
+
+                entity.Property(e => e.AccountId).HasColumnName("AccountID");
+
+                entity.HasOne(d => d.Account)
+                    .WithMany(p => p.AnnouncementAccounts)
+                    .HasForeignKey(d => d.AccountId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_AnnouncementAccount_Account");
+
+                entity.HasOne(d => d.Announcement)
+                    .WithMany(p => p.AnnouncementAccounts)
+                    .HasForeignKey(d => d.AnnouncementId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_AnnouncementAccount_Announcement");
+            });
+
+            modelBuilder.Entity<Bank>(entity =>
+            {
+                entity.ToTable("Bank");
+
+                entity.Property(e => e.Id).HasColumnName("ID");
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(150);
+            });
+
+            modelBuilder.Entity<BankAccount>(entity =>
+            {
+                entity.ToTable("BankAccount");
+
+                entity.Property(e => e.Id).HasColumnName("ID");
+
+                entity.Property(e => e.AccountId).HasColumnName("AccountID");
+
+                entity.Property(e => e.AccountNumber)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.BankId).HasColumnName("BankID");
+
+                entity.Property(e => e.BranchName)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.OwnerName)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.HasOne(d => d.Account)
+                    .WithMany(p => p.BankAccounts)
+                    .HasForeignKey(d => d.AccountId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_BankAccount_Account");
+
+                entity.HasOne(d => d.Bank)
+                    .WithMany(p => p.BankAccounts)
+                    .HasForeignKey(d => d.BankId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_BankAccount_Bank");
             });
 
             modelBuilder.Entity<CapacityProfile>(entity =>
@@ -207,6 +304,10 @@ namespace Api.Models
                 entity.ToTable("Job");
 
                 entity.Property(e => e.Id).HasColumnName("ID");
+
+                entity.Property(e => e.CreateAt)
+                    .HasColumnType("datetime")
+                    .HasColumnName("Create_at");
 
                 entity.Property(e => e.Deadline).HasColumnType("date");
 
@@ -338,7 +439,6 @@ namespace Api.Models
                 entity.HasOne(d => d.Job)
                     .WithMany(p => p.Messages)
                     .HasForeignKey(d => d.JobId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Message_Job");
 
                 entity.HasOne(d => d.Receive)
@@ -369,10 +469,6 @@ namespace Api.Models
                     .HasMaxLength(500);
 
                 entity.Property(e => e.ExpectedDay)
-                    .IsRequired()
-                    .HasMaxLength(50);
-
-                entity.Property(e => e.Status)
                     .IsRequired()
                     .HasMaxLength(50);
 
@@ -456,6 +552,8 @@ namespace Api.Models
 
                 entity.Property(e => e.FreelancerId).HasColumnName("FreelancerID");
 
+                entity.Property(e => e.JobId).HasColumnName("JobID");
+
                 entity.Property(e => e.RenterId).HasColumnName("RenterID");
 
                 entity.HasOne(d => d.Freelancer)
@@ -464,11 +562,36 @@ namespace Api.Models
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Rating_User");
 
+                entity.HasOne(d => d.Job)
+                    .WithMany(p => p.Ratings)
+                    .HasForeignKey(d => d.JobId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Rating_Job");
+
                 entity.HasOne(d => d.Renter)
                     .WithMany(p => p.RatingRenters)
                     .HasForeignKey(d => d.RenterId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Rating_Account");
+            });
+
+            modelBuilder.Entity<Report>(entity =>
+            {
+                entity.ToTable("Report");
+
+                entity.Property(e => e.Id).HasColumnName("ID");
+
+                entity.Property(e => e.AccountId).HasColumnName("AccountID");
+
+                entity.Property(e => e.Detail)
+                    .IsRequired()
+                    .HasMaxLength(500);
+
+                entity.HasOne(d => d.Account)
+                    .WithMany(p => p.Reports)
+                    .HasForeignKey(d => d.AccountId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Report_Account");
             });
 
             modelBuilder.Entity<Role>(entity =>
@@ -510,7 +633,9 @@ namespace Api.Models
 
                 entity.Property(e => e.Id).HasColumnName("ID");
 
-                entity.Property(e => e.Image).HasMaxLength(100);
+                entity.Property(e => e.Image)
+                    .IsRequired()
+                    .HasMaxLength(100);
 
                 entity.Property(e => e.Name)
                     .IsRequired()

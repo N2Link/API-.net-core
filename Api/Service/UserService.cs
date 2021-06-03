@@ -61,47 +61,6 @@ namespace Api.Service
         public IUserService.UserEntitis Auth(string email, string password)
         {
             var list = context.Accounts
-                .Include(p => p.JobRenters)
-                .ThenInclude(p=>p.S).ThenInclude(p=>p.Service)
-                .AsSplitQuery()
-                .Include(p => p.JobRenters)
-                .ThenInclude(p=>p.S).ThenInclude(p=>p.Specialty)
-                .AsSplitQuery()
-                .Include(p => p.JobRenters)
-                .ThenInclude(p=>p.Form)
-                .AsSplitQuery()
-                .Include(p => p.JobRenters)
-                .ThenInclude(p=>p.Type)
-                .AsSplitQuery()
-                .Include(p => p.JobRenters)
-                .ThenInclude(p=>p.Payform)
-                .AsSplitQuery()
-                .Include(p => p.JobRenters)
-                .ThenInclude(p => p.JobSkills).ThenInclude(p => p.Skill)
-                .AsSplitQuery()
-
-
-                .Include(p => p.JobFreelancers)
-                .ThenInclude(p=>p.S).ThenInclude(p=>p.Service)
-                .AsSplitQuery()
-                .Include(p => p.JobFreelancers)
-                .ThenInclude(p=>p.S).ThenInclude(p=>p.Specialty)
-                .AsSplitQuery()
-                .Include(p => p.JobFreelancers)
-                .ThenInclude(p=>p.Form)
-                .AsSplitQuery()
-                .Include(p => p.JobFreelancers)
-                .ThenInclude(p=>p.Type)
-                .AsSplitQuery()
-                .Include(p => p.JobFreelancers)
-                .ThenInclude(p=>p.Payform)
-                .AsSplitQuery()
-                .Include(p => p.JobFreelancers)
-                .ThenInclude(p => p.JobSkills).ThenInclude(p => p.Skill)
-                .AsSplitQuery()
-                .AsSplitQuery()
-
-
                 .Include(p => p.FreelancerSkills).ThenInclude(p => p.Skill)
                 .AsSplitQuery()
                 .Include(p => p.FreelancerServices).ThenInclude(p => p.Service)
@@ -123,6 +82,10 @@ namespace Api.Service
             if (account == null)
             {
                 throw new AppException("Email doesn't exist");
+            }
+            if (account.BannedAtDate != null)
+            {
+                throw new AppException("Your account was bannish");
             }
             if (!VerifyPasswordHash(password, account.PasswordHash, account.PasswordSalt))
                 throw new AppException("Password not correct");
