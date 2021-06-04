@@ -57,7 +57,11 @@ namespace Api.Service
     }
     public class UserService : IUserService
     {
-        FreeLancerVNContext context = new FreeLancerVNContext();
+        private readonly FreeLancerVNContext context;
+        public UserService(FreeLancerVNContext context)
+        {
+            this.context = context;
+        }
         public IUserService.UserEntitis Auth(string email, string password)
         {
             var list = context.Accounts
@@ -114,6 +118,7 @@ namespace Api.Service
             account.PasswordHash = passwordHash;
             account.PasswordSalt = passwordSalt;
             account.Balance = 0;
+            account.OnReady = false;
             context.Accounts.Add(account);
             context.SaveChanges();
             account = context.Accounts
@@ -190,5 +195,7 @@ namespace Api.Service
 
             return true;
         }
+
+
     }
 }

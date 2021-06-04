@@ -39,7 +39,7 @@ namespace Api.Models
         public int? SpecialtyId { get; set; }
         public int? LevelId { get; set; }
         public string ProvinceId { get; set; }
-        public bool? OnReady { get; set; }
+        public bool OnReady { get; set; }
         public string AvatarUrl { get; set; }
         public DateTime CreatedAtDate { get; set; }
         public DateTime? BannedAtDate { get; set; }

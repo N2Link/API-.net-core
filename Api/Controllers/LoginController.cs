@@ -16,13 +16,13 @@ namespace Api.Controllers
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-
+    [EnableCors]
     public class LoginController : ControllerBase
     {
         private IUserService userService;
-        public LoginController()
+        public LoginController(IUserService userService)
         {
-            this.userService = new UserService();
+            this.userService = userService;
         }
 
         [AllowAnonymous]

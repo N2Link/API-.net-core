@@ -21,10 +21,10 @@ namespace Api.Controllers
     {
         IUserService userService;
         IWebHostEnvironment _webHostEnvironment;
-        public RegisterController(IWebHostEnvironment webHostEnvironment)
+        public RegisterController(IWebHostEnvironment webHostEnvironment, IUserService  userService)
         {
             _webHostEnvironment = webHostEnvironment;
-            userService = new UserService();
+            this.userService = userService ;
         }
         [AllowAnonymous]
         [HttpPost]

@@ -35,12 +35,13 @@ namespace Api.Controllers
         public async Task<ActionResult<IEnumerable<Specialty>>> GetSpecialties()
         {
             return await _context.Specialties
-                .Where(p=>p.IsActive ==true)
-                .Select(p=>new Specialty()
+                .Where(p => p.IsActive == true)
+                .Select(p => new Specialty()
                 {
                     Id = p.Id,
                     Name = p.Name,
-                    Image = p.Image
+                    Image = p.Image,
+                    IsActive = true
                 })
                 .ToListAsync();
         }
