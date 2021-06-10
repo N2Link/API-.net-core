@@ -38,7 +38,7 @@ namespace Api.Controllers
                 .ToListAsync();
         }
 
-        [HttpGet("freelancer/{freelancerID}")]
+/*        [HttpGet("freelancer/{freelancerID}")]
         public async Task<ActionResult<IEnumerable<CapacityProfileResponse>>> GetCPListByUserId(int freelancerID)
         {
             return await _context.CapacityProfiles
@@ -46,7 +46,7 @@ namespace Api.Controllers
                         .Where(p=>p.FreelancerId==freelancerID)
                         .Select(p => new CapacityProfileResponse(p))
                         .ToListAsync();
-        }
+        }*/
 
         // GET: api/CapacityProfiles/5
         [HttpGet("{id}")]
@@ -93,33 +93,35 @@ namespace Api.Controllers
                 return BadRequest();
             }
             //create image
-            string newUrl = "";
+            string newname = "";
             if (cpEditModel.ImageBase64 != "")
             {
-                string imageUrl = _webHostEnvironment.WebRootPath;
-                newUrl = "\\Images\\" + capacityProfile.Id + "_" + cpEditModel.ImageName;
-                using (FileStream fs = System.IO.File.Create(imageUrl + newUrl))
+                string rootpath = _webHostEnvironment.WebRootPath;
+
+                newname = cpEditModel.ImageName+"_"+capacityProfile.Id;
+
+                using (FileStream fs = System.IO.File.Create(rootpath +"\\Images"+ newname))
                 {
                     fs.Close();
-                    System.IO.File.WriteAllBytes(imageUrl + newUrl, Convert.FromBase64String(cpEditModel.ImageBase64));
+                    System.IO.File.WriteAllBytes(rootpath + "\\Images" + newname, Convert.FromBase64String(cpEditModel.ImageBase64));
                 }
                 if (capacityProfile.ImageUrl != null)
                 {
+                    var nameDelete = capacityProfile.ImageUrl
+                        .Substring(capacityProfile.ImageUrl.LastIndexOf("/") + 1);
                     try
                     {
-                        System.IO.File.Delete(imageUrl + capacityProfile.ImageUrl);
+                        System.IO.File.Delete(rootpath + "\\Images\\" + nameDelete);
                     }
-                    catch (Exception)
-                    {
-                        throw;
-                    }
+                    catch (Exception) {}
                 }
             }
 
             capacityProfile.Name = cpEditModel.Name;
             capacityProfile.Description = cpEditModel.Description;
             capacityProfile.Urlweb = cpEditModel.Urlweb;
-            capacityProfile.ImageUrl = newUrl ==""?capacityProfile.ImageUrl:newUrl;
+            capacityProfile.ImageUrl = newname ==""?capacityProfile.ImageUrl:
+                "freelancervn.somee.com/api/images/images/" + newname;
             _context.ProfileServices.RemoveRange(capacityProfile.ProfileServices.ToArray());
             await _context.SaveChangesAsync();
 
@@ -185,15 +187,6 @@ namespace Api.Controllers
 
             await _context.SaveChangesAsync();
 
-            //create image
-            string imageUrl = _webHostEnvironment.WebRootPath;
-            string newURL = "\\Images\\"+ capacityProfile.Id  + "_" + cProfilePostModel.ImageName;
-            using (FileStream fs = System.IO.File.Create(imageUrl + newURL))
-            {
-                fs.Close();
-                System.IO.File.WriteAllBytes(imageUrl + newURL, Convert.FromBase64String(cProfilePostModel.ImageBase64));
-            }
-            capacityProfile.ImageUrl = newURL;
 
             foreach (var item in cProfilePostModel.Services)
             {
@@ -221,6 +214,16 @@ namespace Api.Controllers
             capacityProfile = _context.CapacityProfiles
                 .Include(p => p.ProfileServices).ThenInclude(p => p.Service)
                 .SingleOrDefault(p => p.Id == capacityProfile.Id);
+            //create image
+            string rootpath = _webHostEnvironment.WebRootPath;
+            var newname = cProfilePostModel.ImageName +"_"+ capacityProfile.Id;
+            using (FileStream fs = System.IO.File.Create(rootpath + "\\Images" + newname))
+            {
+                fs.Close();
+                System.IO.File.WriteAllBytes(rootpath + "\\Images" + newname, Convert.FromBase64String(cProfilePostModel.ImageBase64));
+            }
+            capacityProfile.ImageUrl = "freelancervn.somee.com/api/images/images/" + newname;
+            _context.SaveChanges();
             return Ok(new CapacityProfileResponse(capacityProfile));
         }
 
@@ -228,15 +231,16 @@ namespace Api.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult<CapacityProfile>> DeleteCapacityProfile(int id)
         {
-            var capacityProfile = await _context.CapacityProfiles.FindAsync(id);
+            var capacityProfile = await _context.CapacityProfiles.Include(p=>p.ProfileServices)
+                .SingleOrDefaultAsync(p=>p.Id == id);
             if (capacityProfile == null)
             {
                 return NotFound();
             }
-
+            _context.ProfileServices.RemoveRange(capacityProfile.ProfileServices);
+            await _context.SaveChangesAsync();
             _context.CapacityProfiles.Remove(capacityProfile);
             await _context.SaveChangesAsync();
-
             return capacityProfile;
         }
 

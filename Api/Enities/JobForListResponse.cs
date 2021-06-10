@@ -15,10 +15,11 @@ namespace Api.Enities
             Id = job.Id;
             Name = job.Name;
             Deadline = job.Deadline;
-            Deadline = job.CreateAt;
+            CreatAt = job.CreateAt;
             Cellingprice = job.Cellingprice;
             Details = job.Details;
             Floorprice = job.Floorprice;
+            Status = job.Status;
             Freelancer = job.Freelancer==null?null : new ResponseIdName(job.Freelancer);
             Renter = job.Renter==null?null : new ResponseIdName(job.Renter);
         }
@@ -29,6 +30,7 @@ namespace Api.Enities
         public string Details { get; set; }
         public int Floorprice { get; set; }
         public int Cellingprice { get; set; }
+        public string Status{ get; set; }
         public ResponseIdName Freelancer { get; set; }
         public ResponseIdName Renter { get; set; }
     }

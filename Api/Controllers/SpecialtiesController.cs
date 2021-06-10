@@ -109,24 +109,36 @@ namespace Api.Controllers
         public async Task<IActionResult> PutSpecialty(int id, SpecialtyPModel specialtyPutModel)
         {
             var specialty = _context.Specialties.Find(id);
-
-            try
+            if (specialty == null)
             {
-                System.IO.File.Delete(rootpath + specialty.Image);
+                return NotFound();
             }
-            catch (Exception){}
-            string newURL = "\\Images\\" +specialtyPutModel.Image.Name+"_"+specialty.Id;
-
-            using (FileStream fs = System.IO.File.Create(rootpath + newURL))
+            //create image
+            string newname = "";
+            if (specialtyPutModel.ImageBase64 != "")
             {
-                fs.Close();
-                System.IO.File.WriteAllBytes(rootpath + newURL, 
-                    Convert.FromBase64String(specialtyPutModel.Image.ImageBase64));
+                string rootpath = _webHostEnvironment.WebRootPath;
 
+                var nameDelete = specialty.Image
+                    .Substring(specialty.Image.LastIndexOf("/") + 1);
+                try
+                {
+                    System.IO.File.Delete(rootpath + "\\Images\\" + nameDelete);
+                }
+                catch (Exception) { }
+
+                newname = specialtyPutModel.ImageName + "_"+id;
+
+                using (FileStream fs = System.IO.File.Create(rootpath + "\\Assets\\" + newname))
+                {
+                    fs.Close();
+                    System.IO.File.WriteAllBytes(rootpath + "\\Images" + newname, Convert.FromBase64String(specialtyPutModel.ImageBase64));
+                }
             }
+
 
             specialty.Name = specialtyPutModel.Name;
-            specialty.Image = newURL;
+            specialty.Image = "freelancervn.somee.com/api/images/assets/" + newname;
             _context.Entry(specialtyPutModel).State = EntityState.Modified;
 
             try
@@ -157,15 +169,15 @@ namespace Api.Controllers
             var specialty = new Specialty() { Name = specialtyPostModel.Name };
             _context.Specialties.Add(specialty);
             await _context.SaveChangesAsync();
-            string newURL = "\\Images\\" + specialtyPostModel.Image.Name + "_" + specialty.Id;
-            using (FileStream fs = System.IO.File.Create(rootpath + newURL))
+            string newname = specialtyPostModel.Name + "_" + specialty.Id;
+            using (FileStream fs = System.IO.File.Create(rootpath + newname))
             {
                 fs.Close();
-                System.IO.File.WriteAllBytes(rootpath + newURL,
-                    Convert.FromBase64String(specialtyPostModel.Image.ImageBase64));
+                System.IO.File.WriteAllBytes(rootpath + "\\Images\\" +newname,
+                    Convert.FromBase64String(specialtyPostModel.ImageBase64));
             }
             specialty.Name = specialtyPostModel.Name;
-            specialty.Image = newURL;
+            specialty.Image = "freelancervn.somee.com/api/images/assets/" + newname;
             await _context.SaveChangesAsync();
 
             return specialty;

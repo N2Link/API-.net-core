@@ -7,7 +7,6 @@ namespace Api.Enities
 {
     public class BankAccountPostModel
     {
-        public int AccountId { get; set; }
         public int BankId { get; set; }
         public string OwnerName { get; set; }
         public string AccountNumber { get; set; }

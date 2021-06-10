@@ -26,68 +26,112 @@ namespace Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<JobForListResponse>>> getJobs()
         {
-            return await _context.Jobs.Include(p => p.Renter).OrderByDescending(p => p.Id)
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var account = await _context.Accounts.SingleOrDefaultAsync(p => p.Email == email);
+            if (account == null) { return NotFound(); }
+
+            return await _context.Jobs.Include(p => p.Renter).OrderByDescending(p => p.CreateAt)
+                .Where(p=>p.RenterId!= account.Id)
                 .Select(p => new JobForListResponse(p)).ToListAsync();
         }
 
         [HttpGet("search")]
-        public async Task<ActionResult<IEnumerable<JobResponseModel>>> GetListSerch
-            (int page, int count,
-            string search, int? specialtyId, string? serviceIds, string? skillIds,
-            int? formId, int? payId, int? typeId,string? provinceId,
-            long floorPrice =0, long cellingPrice= Int64.MaxValue)
+        public async Task<ActionResult<IEnumerable<JobForListResponse>>> GetListSearch(string search, int? floorPrice, int? cellingPrice,
+            int? specialtyId, int? serviceId, int? payFormId, int? formOfWorkId, int? typeOfWorkId,
+            string? provinceId)
         {
-            List<string> partServiceId = new List<string>();
-            if (serviceIds != null)
-            {
-                partServiceId = serviceIds.Split(" ").ToList();
-            }
-            List<string> partSkillId = new List<string>();
-            if (serviceIds != null)
-            {
-                partSkillId = skillIds.Split(" ").ToList();
-            }
-            string[] partSearch = search.Split(" ");
-            List<Job> list = new List<Job>();
-            try
-            {
-                var listTemp = _context.Jobs
-                .Where(p => p.Name.Contains(search) &&
-                (specialtyId == null || p.SpecialtyId == specialtyId) &&
-                (serviceIds == null || partServiceId.Contains(p.ServiceId.ToString())) &&
-                (formId == null || p.FormId == formId) &&
-                (payId == null || p.PayformId == payId) &&
-                (typeId == null || p.TypeId == typeId) &&
-                (provinceId == null || p.ProvinceId == provinceId) &&
-                p.Floorprice >= floorPrice && p.Cellingprice <= cellingPrice
-                ).ToList();
-                foreach (var item in listTemp)
-                {
-                    foreach (var skillId in partSkillId)
-                    {
-                        if (item.JobSkills.Select(p => p.SkillId).ToList()
-                            .Contains(Int32.Parse(skillId)))
-                        {
-                            list.Add(item);
-                            break;
-                        }
-                    }
-                }
-            }
-            catch (Exception)
-            {
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var account = await _context.Accounts.SingleOrDefaultAsync(p => p.Email == email);
+            if (account == null) { return NotFound(); }
 
-                return BadRequest(new {message="loi code linq"});
-            }
-            try
+            if (floorPrice == null)
             {
-                return PaginationJob(page, count, list);
+                floorPrice = 0;
+            }
+            if (cellingPrice == null)
+            {
+                cellingPrice = Int32.MaxValue;
+            }
+            var list = await _context.Jobs                
+                .Where(p=>p.Name.Contains(search)
+                &&p.Floorprice>=floorPrice
+                &&p.Cellingprice<=cellingPrice
+                &&(specialtyId == null|| p.SpecialtyId==specialtyId)
+                &&(serviceId ==null || p.ServiceId==serviceId)
+                &&(payFormId==null||p.PayformId == payFormId)
+                &&(formOfWorkId == null|| p.FormId == formOfWorkId)
+                &&(typeOfWorkId== null || p.TypeId == typeOfWorkId))
+                .Select(p=> new JobForListResponse(p))
+                .ToListAsync();
+            return list;
 
-            }
-            catch (AppException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            //List<string> partServiceId = new List<string>();
+            //if (serviceIds != null)
+            //{
+            //    partServiceId = serviceIds.Split(" ").ToList();
+            //}
+            //List<string> partSkillId = new List<string>();
+            //if (serviceIds != null)
+            //{
+            //    partSkillId = skillIds.Split(" ").ToList();
+            //}
+            //string[] partSearch = search.Split(" ");
+            //List<Job> list = new List<Job>();
+            //try
+            //{
+            //    var listTemp = _context.Jobs
+            //    .Where(p => p.Name.Contains(search) &&
+            //    (specialtyId == null || p.SpecialtyId == specialtyId) &&
+            //    (serviceIds == null || partServiceId.Contains(p.ServiceId.ToString())) &&
+            //    (formId == null || p.FormId == formId) &&
+            //    (payId == null || p.PayformId == payId) &&
+            //    (typeId == null || p.TypeId == typeId) &&
+            //    (provinceId == null || p.ProvinceId == provinceId) &&
+            //    p.Floorprice >= floorPrice && p.Cellingprice <= cellingPrice
+            //    ).ToList();
+            //    foreach (var item in listTemp)
+            //    {
+            //        foreach (var skillId in partSkillId)
+            //        {
+            //            if (item.JobSkills.Select(p => p.SkillId).ToList()
+            //                .Contains(Int32.Parse(skillId)))
+            //            {
+            //                list.Add(item);
+            //                break;
+            //            }
+            //        }
+            //    }
+            //}
+            //catch (Exception)
+            //{
+
+            //    return BadRequest(new {message="loi code linq"});
+            //}
+            //try
+            //{
+            //    return PaginationJob(page, count, list);
+
+            //}
+            //catch (AppException ex)
+            //{
+            //    return BadRequest(new { message = ex.Message });
+            //}
         }
 
         [HttpGet("pagination")]
@@ -329,7 +373,7 @@ namespace Api.Controllers
                 }
             }
             return Ok();
-        }
+        }   
         //Get messages
         [HttpGet("{id}/messages")]
         public ActionResult<List<MessageResponse>> Getmessages(int id)
@@ -360,6 +404,74 @@ namespace Api.Controllers
             }
             return job.Messages.Select(p=>new MessageResponse(p)).ToList();
         }
+        //put close .. renter
+        [HttpPut("{id}/close")]
+        public async Task<ActionResult> CloseJob(int id)
+        {
+            var job = _context.Jobs.Find(id);
+            if (job == null)
+            {
+                return NotFound();
+            }
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+
+            var renter = await _context.Accounts
+                .SingleOrDefaultAsync(p => p.Email == email);
+            if (job.RenterId != renter.Id)
+            {
+                return BadRequest(new { message = "You dont have this permission" });
+            }
+            if (job.Status != "Waiting")
+            {
+                return BadRequest(new { message = "Can't close this job." });
+            }
+            job.Status = "Closed";
+            _context.Entry(job).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+        //put request finish .. freelancer
+        [HttpPut("{id}/requestfinish")]
+        public async Task<ActionResult> Requestfinish(int id)
+        {
+            var job = _context.Jobs.Find(id);
+            if(job == null)
+            {
+                return NotFound();
+            }
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+
+            var freelancer = await _context.Accounts
+                .SingleOrDefaultAsync(p => p.Email == email);
+            if(job.FreelancerId!= freelancer.Id)
+            {
+                return BadRequest(new { message = "You dont have this permission" });
+            }
+            if(job.Status !="In progress")
+            {
+                return BadRequest();
+            }
+            job.Status = "Request finish";
+            _context.Entry(job).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return Ok();
+        }    
         //put done
         [HttpPut("{id}/done")]
         public async Task<ActionResult> DoneJob(int id)
@@ -385,12 +497,140 @@ namespace Api.Controllers
             {
                 return BadRequest(new { message = "You dont have this permission" });
             }
+            if (job.Status != "Request finish") 
+            {
+                return BadRequest();
+            }
             job.Status = "Done";
             _context.Entry(job).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return Ok();
-        }      
-        [HttpPut("{id}/cancel")]
+        }    
+        //put Rework request
+        [HttpPut("{id}/requestrework")]
+        public async Task<IActionResult> RequestRework(int id)
+        {
+            Job job = _context.Jobs.Find(id);
+            if (job == null) { NotFound(); }
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var account = job.Renter;
+            if (account.Email != email)
+            {
+                return BadRequest();
+            }
+            if (job.Status != "Request finish")
+            {
+                return BadRequest();
+            }
+            job.Status = "Request rework";
+
+            _context.Entry(job).State = EntityState.Modified;
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!JobExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return Ok();
+        }        
+        //put  request cancellation
+        [HttpPut("{id}/requestcancellation")]
+        public async Task<IActionResult> CancelRequest(int id)
+        {
+            Job job = _context.Jobs.Find(id);
+            if (job == null) { NotFound(); }
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var account = job.Renter;
+            if (account.Email != email)
+            {
+                return BadRequest();
+            }
+            if (job.Status != "Request finish")
+            {
+                return BadRequest();
+            }
+            job.Status = "Request cancellation";
+
+            _context.Entry(job).State = EntityState.Modified;
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!JobExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return Ok();
+        }
+        //put rework .. admin
+        [HttpPut("adminmode/{id}/rework")]
+        public async Task<ActionResult> Reworkjob(int id)
+        {
+            var job = _context.Jobs.Find(id);
+            if (job == null)
+            {
+                return NotFound();
+            }
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+
+            var renter = await _context.Accounts
+                .SingleOrDefaultAsync(p => p.Email == email);
+            if (job.RenterId != renter.Id)
+            {
+                return BadRequest(new { message = "You dont have this permission" });
+            }
+            if (job.Status != "Request rework")
+            {
+                return BadRequest();
+            }
+            job.Status = "In progress";
+            _context.Entry(job).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        //put cancel .. admin
+        [HttpPut("adminmode/{id}/cancel")]
         public async Task<ActionResult> CancelJob(int id)
         {
             var job = _context.Jobs.Find(id);
@@ -413,6 +653,10 @@ namespace Api.Controllers
             if(job.RenterId!= renter.Id)
             {
                 return BadRequest(new { message = "You dont have this permission" });
+            }
+            if(job.Status != "Request cancellation")
+            {
+                return BadRequest();
             }
             job.Status = "Cancelled";
             _context.Entry(job).State = EntityState.Modified;

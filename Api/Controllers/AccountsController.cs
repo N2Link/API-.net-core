@@ -28,11 +28,23 @@ namespace Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<AccountForListResponse>>> GetAccounts()
         {
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var account = await _context.Accounts.SingleOrDefaultAsync(p => p.Email == email);
+            if (account == null) { return NotFound(); }
+
             return await _context.Accounts
                 .Include(p => p.Specialty)
                 .Include(p => p.RatingFreelancers)
                 .Include(p => p.Level)
-                .Where(p=>p.BannedAtDate==null)
+                .Where(p=>p.BannedAtDate==null && p.Id!= account.Id)
                 .Select(p => new AccountForListResponse(p)).ToListAsync();
         }  
         [HttpGet("adminmode")]
@@ -44,11 +56,38 @@ namespace Api.Controllers
                 .Include(p => p.Level)
                 .Select(p => new AccountForListResponse(p)).ToListAsync();
         }
-/*        [HttpGet("search")]
-        public async Task<ActionResult> GetLisSearch(int page, int count, string search)
+        [HttpGet("search")]
+        public async Task<ActionResult<IEnumerable<AccountForListResponse>>> GetListSearch(string search, 
+            string provinceId, int level = 1)
         {
-            var list = _context.Accounts.Where(p => p.Name.Contains(search));
-        }*/
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var account = await _context.Accounts.SingleOrDefaultAsync(p => p.Email == email);
+            if (account == null) { return NotFound(); }
+            if (provinceId == "All")
+            {
+                provinceId = null;
+            }
+            var list = await
+                _context.Accounts
+                .Include(p => p.Specialty)
+                .Include(p => p.RatingFreelancers)
+                .Include(p => p.Level)
+                .Where(p => p.Name.Contains(search)
+                &&(provinceId == null|| p.ProvinceId == provinceId)
+                &&level<=p.LevelId
+                && p.BannedAtDate == null && p.Id != account.Id)
+                .Select(p=> new AccountForListResponse(p))
+                .ToListAsync();
+            return list;
+        }
 
         //Get listjob cho freelancer
         [HttpGet("{id}/jobfreelancers")]
@@ -93,7 +132,9 @@ namespace Api.Controllers
                 return NotFound();
             }
             var jobFreelancers = account.JobFreelancers
-                .Where(p=>p.Status == "In progress")
+                .Where(p=>p.Status == "In progress"
+                || p.Status == "Request rework"
+                || p.Status == "Request cancellation")
                 .Select(p=> new JobForListResponse(p)).ToList();
             return jobFreelancers;
         }      
@@ -119,7 +160,7 @@ namespace Api.Controllers
                 return NotFound();
             }
             var jobFreelancers = account.JobFreelancers
-                .Where(p=>p.Deadline<=DateTime.Now && p.Status != "Waiting")
+                .Where(p=>p.Status == "Done" || p.Status =="Cancelled" )
                 .Select(p=> new JobForListResponse(p)).ToList();
             return jobFreelancers;
         }       
@@ -219,8 +260,8 @@ namespace Api.Controllers
                 return NotFound();
             }
             var JobRenters = account.JobRenters
-                .Where(p=>p.Deadline>DateTime.Now || 
-                (p.Status!="Waiting"&&p.Status!="In progress"))
+                .Where(p => (p.Deadline > DateTime.Now && p.Status != "Waiting")
+                || p.Status == "Done" || p.Status == "Closed" || p.Status =="Cancelled")
                 .Select(p=> new JobForListResponse(p)).ToList();
             return JobRenters;
         }
@@ -270,8 +311,19 @@ namespace Api.Controllers
                 .Select(p => new ResponseIdName {Id = p.Service.Id, Name = p.Service.Name}).ToList();
             return service;
         }
+        //get capacity profiles
+        [HttpGet("{id}/capacityprofiles")]
+        public async Task<ActionResult<IEnumerable<CapacityProfileResponse>>> GetCPListByUserId(int id)
+        {
+            return await _context.CapacityProfiles
+                        .Include(p => p.ProfileServices).ThenInclude(p => p.Service)
+                        .Where(p => p.FreelancerId == id)
+                        .Select(p => new CapacityProfileResponse(p))
+                        .ToListAsync();
+        }
+
         //get offerhistory 
-        [HttpGet("{id}/offerhistorys")]
+        [HttpGet("{id}/offerhistories")]
         public ActionResult<List<OfferHistoryResponse>> GetFreelancerOfferHistories(int id)
         {
             var account = _context.Accounts

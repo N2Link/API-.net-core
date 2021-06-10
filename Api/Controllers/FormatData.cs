@@ -20,23 +20,40 @@ namespace Api.Controllers
         [HttpGet]
         public String FormatDataDB()
         {
-/*            foreach (var item in _context.Accounts.ToList())
+            var name = "";
+            foreach (var item in _context.Accounts.ToList())
             {
-                item.AvatarUrl = "\\Avatars\\" + item.AvatarUrl;
+                name = item.AvatarUrl.Substring(item.AvatarUrl.LastIndexOf("\\") + 1);
+                item.AvatarUrl = "freelancervn.somee.com/api/images/avatars/" + name;
             }
-            _context.SaveChanges();
-                    
             foreach (var item in _context.CapacityProfiles.ToList())
             {
-                item.ImageUrl = "\\Images\\" + item.ImageUrl;
-            }
-            _context.SaveChanges();
-              
+                name = item.ImageUrl.Substring(item.ImageUrl.LastIndexOf("\\") + 1);
+                item.ImageUrl = "freelancervn.somee.com/api/images/images/" + name;
+            }    
             foreach (var item in _context.Specialties.ToList())
             {
-                item.Image = "\\Assets\\" + item.Image;
+                name = item.Image.Substring(item.Image.LastIndexOf("\\") + 1);
+                item.Image = "freelancervn.somee.com/api/images/assets/" + name;
             }
-            _context.SaveChanges();*/
+            _context.SaveChanges();
+            //foreach (var item in _context.Accounts.ToList())
+            //{
+            //    item.AvatarUrl = "\\Avatars\\" + item.AvatarUrl;
+            //}
+            //_context.SaveChanges();
+
+            //foreach (var item in _context.CapacityProfiles.ToList())
+            //{
+            //    item.ImageUrl = "\\Images\\" + item.ImageUrl;
+            //}
+            //_context.SaveChanges();
+
+            //foreach (var item in _context.Specialties.ToList())
+            //{
+            //    item.Image = "\\Assets\\" + item.Image;
+            //}
+            //_context.SaveChanges();
 
             return "OK";
         }

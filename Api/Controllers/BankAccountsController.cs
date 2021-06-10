@@ -59,13 +59,12 @@ namespace Api.Controllers
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             Account account = _context.Accounts.Include(p=>p.BankAccounts)
                 .SingleOrDefault(p => p.Email == email);
-            if (account == null || bankAccountPostModel.AccountId != account.Id)
+            if (account == null)
             {
                 return BadRequest();
             }
             BankAccount bankAccount = account.BankAccounts.SingleOrDefault(p => p.Id == id);
             bankAccount.BankId = bankAccountPostModel.BankId;
-            bankAccount.AccountId = bankAccountPostModel.AccountId;
             bankAccount.OwnerName = bankAccountPostModel.OwnerName;
             bankAccount.AccountNumber = bankAccountPostModel.AccountNumber;
             bankAccount.BranchName = bankAccountPostModel.BranchName;
@@ -102,7 +101,7 @@ namespace Api.Controllers
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             Account account = _context.Accounts.SingleOrDefault(p => p.Email == email);
-            if (account == null||bankAccountPostModel.AccountId!=account.Id)
+            if (account == null)
             {
                 return BadRequest();
             }
@@ -110,7 +109,7 @@ namespace Api.Controllers
             BankAccount bankAccount = new BankAccount()
             {
                 BankId = bankAccountPostModel.BankId,
-                AccountId = bankAccountPostModel.AccountId,
+                AccountId = account.Id,
                 OwnerName = bankAccountPostModel.OwnerName,
                 AccountNumber = bankAccountPostModel.AccountNumber,
                 BranchName = bankAccountPostModel.BranchName,

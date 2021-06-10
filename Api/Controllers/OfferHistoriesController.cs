@@ -76,6 +76,7 @@ namespace Api.Controllers
                 Description = offerHistoryPost.Description,
                 ExpectedDay = offerHistoryPost.ExpectedDay,
                 OfferPrice = offerHistoryPost.OfferPrice,
+                TodoList = offerHistoryPost.TodoList,
             };
             _context.OfferHistories.Add(offerHistory);
             try
@@ -93,7 +94,7 @@ namespace Api.Controllers
                     throw;
                 }
             }
-            return Ok(offerHistory);
+            return Ok();
         }
 
         // DELETE: api/OfferHistories/5
