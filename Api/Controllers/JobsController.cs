@@ -44,9 +44,11 @@ namespace Api.Controllers
         }
 
         [HttpGet("search")]
-        public async Task<ActionResult<IEnumerable<JobForListResponse>>> GetListSearch(string search, int? floorPrice, int? cellingPrice,
-            int? specialtyId, int? serviceId, int? payFormId, int? formOfWorkId, int? typeOfWorkId,
-            string? provinceId)
+        public async Task<ActionResult<IEnumerable<JobForListResponse>>> GetListSearch(
+            string search,
+            int floorPrice, int cellingPrice,
+            int specialtyId, int serviceId, int payFormId, int formOfWorkId, int typeOfWorkId,
+            string provinceId)
         {
             String jwt = Request.Headers["Authorization"];
             jwt = jwt.Substring(7);
@@ -60,23 +62,16 @@ namespace Api.Controllers
             var account = await _context.Accounts.SingleOrDefaultAsync(p => p.Email == email);
             if (account == null) { return NotFound(); }
 
-            if (floorPrice == null)
-            {
-                floorPrice = 0;
-            }
-            if (cellingPrice == null)
-            {
-                cellingPrice = Int32.MaxValue;
-            }
             var list = await _context.Jobs                
                 .Where(p=>p.Name.Contains(search)
                 &&p.Floorprice>=floorPrice
                 &&p.Cellingprice<=cellingPrice
-                &&(specialtyId == null|| p.SpecialtyId==specialtyId)
-                &&(serviceId ==null || p.ServiceId==serviceId)
-                &&(payFormId==null||p.PayformId == payFormId)
-                &&(formOfWorkId == null|| p.FormId == formOfWorkId)
-                &&(typeOfWorkId== null || p.TypeId == typeOfWorkId))
+                &&(specialtyId == 0|| p.SpecialtyId==specialtyId)
+                &&(serviceId ==0 || p.ServiceId==serviceId)
+                &&(payFormId==0||p.PayformId == payFormId)
+                &&(provinceId == "00" || p.ProvinceId == provinceId)
+                && (formOfWorkId == 0|| p.FormId == formOfWorkId)
+                &&(typeOfWorkId== 0 || p.TypeId == typeOfWorkId))
                 .Select(p=> new JobForListResponse(p))
                 .ToListAsync();
             return list;

@@ -36,7 +36,7 @@ namespace Api.Controllers
             account.Email = model.Email;
             account.RoleId = model.RoleID;
             //string path = _webHostEnvironment.WebRootPath + "\\Avatars\\default.jpg";
-            account.AvatarUrl = "\\Avatars\\default.jpg";
+            account.AvatarUrl = "freelancervn.somee.com/api/images/avatars/default.jpg";
             try
             {
                 IUserService.UserEntitis userEntitis =

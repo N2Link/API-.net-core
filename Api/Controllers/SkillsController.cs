@@ -75,7 +75,7 @@ namespace Api.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutSkill(int id, [FromBody] string name)
+        public async Task<IActionResult> PutSkill(int id, SkillPost skillPost)
         {
             var skill = await _context.Skills.FindAsync(id);
             if (skill == null) { BadRequest(); }
@@ -93,7 +93,7 @@ namespace Api.Controllers
                 .SingleOrDefaultAsync(p => p.Email == email && p.RoleId == 1);
             if (admin == null) { return BadRequest(); }
 
-            skill.Name = name;
+            skill.Name = skillPost.Name;
             _context.Entry(skill).State = EntityState.Modified;
 
             try
@@ -119,7 +119,7 @@ namespace Api.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPost]
-        public async Task<ActionResult<Skill>> PostSkill([FromBody] string name)
+        public async Task<ActionResult<Skill>> PostSkill(SkillPost skillPost)
         {
             String jwt = Request.Headers["Authorization"];
             jwt = jwt.Substring(7);
@@ -133,7 +133,7 @@ namespace Api.Controllers
             var admin = await _context.Accounts
                 .SingleOrDefaultAsync(p => p.Email == email && p.RoleId == 1);
             if (admin == null) { return BadRequest(); }
-            Skill skill = new Skill() { Name = name, IsActive= true };
+            Skill skill = new Skill() { Name = skillPost.Name, IsActive= true };
             _context.Skills.Add(skill);
             await _context.SaveChangesAsync();
 

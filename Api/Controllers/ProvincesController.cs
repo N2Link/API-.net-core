@@ -31,7 +31,7 @@ namespace Api.Controllers
                 ProvinceId= p.ProvinceId, 
                 Name = p.Name,
                 Type = p.Type 
-            }) .ToListAsync();
+            }).OrderBy(p=>p.Name).ToListAsync();
         }
 
         // GET: api/Provinces/5
@@ -104,22 +104,6 @@ namespace Api.Controllers
             }
 
             return CreatedAtAction("GetProvince", new { id = province.ProvinceId }, province);
-        }
-
-        // DELETE: api/Provinces/5
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<Province>> DeleteProvince(string id)
-        {
-            var province = await _context.Provinces.FindAsync(id);
-            if (province == null)
-            {
-                return NotFound();
-            }
-
-            _context.Provinces.Remove(province);
-            await _context.SaveChangesAsync();
-
-            return province;
         }
 
         private bool ProvinceExists(string id)

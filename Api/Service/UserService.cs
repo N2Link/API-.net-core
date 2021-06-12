@@ -35,6 +35,7 @@ namespace Api.Service
             {
                 List<Claim> lstClaim = new List<Claim>(); //CLAIM USER INFO
                 lstClaim.Add(new Claim(ClaimTypes.Email, this.account.Email));
+                lstClaim.Add(new Claim(ClaimTypes.NameIdentifier, this.account.Email));
                 lstClaim.Add(new Claim(ClaimTypes.Role, this.account.Role.Id.ToString()));
 
                 //CREATE JWT TOKEN

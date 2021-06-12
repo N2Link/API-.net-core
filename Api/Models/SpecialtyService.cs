@@ -14,6 +14,7 @@ namespace Api.Models
 
         public int SpecialtyId { get; set; }
         public int ServiceId { get; set; }
+        public bool IsActive { get; set; }
 
         public virtual Service Service { get; set; }
         public virtual Specialty Specialty { get; set; }

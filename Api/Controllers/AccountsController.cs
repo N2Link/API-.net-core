@@ -57,8 +57,9 @@ namespace Api.Controllers
                 .Select(p => new AccountForListResponse(p)).ToListAsync();
         }
         [HttpGet("search")]
-        public async Task<ActionResult<IEnumerable<AccountForListResponse>>> GetListSearch(string search, 
-            string provinceId, int level = 1)
+        public async Task<ActionResult<IEnumerable<AccountForListResponse>>> 
+            GetListSearch(string search, int specialtyId, int serviceId,
+            string provinceId, int levelId)
         {
             String jwt = Request.Headers["Authorization"];
             jwt = jwt.Substring(7);
@@ -69,20 +70,24 @@ namespace Api.Controllers
             var tokenS = jsonToken as JwtSecurityToken;
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
-            var account = await _context.Accounts.SingleOrDefaultAsync(p => p.Email == email);
+            var account = await _context.Accounts
+                .Include(p=>p.FreelancerServices).ThenInclude(p=>p.Service)
+                .SingleOrDefaultAsync(p => p.Email == email);
             if (account == null) { return NotFound(); }
-            if (provinceId == "All")
-            {
-                provinceId = null;
-            }
+
             var list = await
                 _context.Accounts
                 .Include(p => p.Specialty)
                 .Include(p => p.RatingFreelancers)
                 .Include(p => p.Level)
                 .Where(p => p.Name.Contains(search)
-                &&(provinceId == null|| p.ProvinceId == provinceId)
-                &&level<=p.LevelId
+                &&(provinceId == "00"|| p.ProvinceId == provinceId)
+                &&(levelId == 0||p.LevelId==levelId)
+                &&(specialtyId == 0||p.SpecialtyId == specialtyId)
+                &&(serviceId == 0
+                ||p.FreelancerServices.Select(x=>x.Service)
+                    .Where(x=>x.IsActive==true).Select(p=>p.Id)                
+                    .ToList().Contains(serviceId))
                 && p.BannedAtDate == null && p.Id != account.Id)
                 .Select(p=> new AccountForListResponse(p))
                 .ToListAsync();

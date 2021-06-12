@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Api.Controllers;
+using Api.Hubs;
 using Api.Models;
 using Api.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -35,6 +36,8 @@ namespace Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddSignalR();
+
             services.AddCors();
             services.AddControllers();
             services.AddDbContext<FreeLancerVNContext>(option =>
@@ -98,7 +101,7 @@ namespace Api
                     ValidateIssuer = false,
                     ValidateAudience = false
                 };
-            });
+            }); 
             services.AddScoped<IUserService, UserService>();
 
 
@@ -136,6 +139,10 @@ namespace Api
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+            });
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapHub<ChatHub>("/chatHub");
             });
         }
     }

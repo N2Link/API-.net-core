@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 
 namespace Api.Enities
 {
-    public class ServicePModel
+    public class ServicePost
     {
         public string Name { get; set; }
-        public List<ResponseIdName> Services { get; set; }
+        public List<ResponseIdName> Specialties { get; set; }
     }
 }

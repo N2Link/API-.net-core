@@ -108,7 +108,8 @@ namespace Api.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutSpecialty(int id, SpecialtyPModel specialtyPutModel)
         {
-            var specialty = _context.Specialties.Find(id);
+            var specialty = await _context.Specialties.Include(p=>p.SpecialtyServices)
+                .SingleOrDefaultAsync(p=>p.Id == id);
             if (specialty == null)
             {
                 return NotFound();
@@ -134,11 +135,37 @@ namespace Api.Controllers
                     fs.Close();
                     System.IO.File.WriteAllBytes(rootpath + "\\Images" + newname, Convert.FromBase64String(specialtyPutModel.ImageBase64));
                 }
+                specialty.Image = "freelancervn.somee.com/api/images/assets/" + newname;
             }
 
 
             specialty.Name = specialtyPutModel.Name;
-            specialty.Image = "freelancervn.somee.com/api/images/assets/" + newname;
+
+            List<int> check = new List<int>();
+            check = specialtyPutModel.Services.Select(p => p.Id).ToList();
+            //unActive 
+            foreach (var item in specialty.SpecialtyServices.Where(p => p.IsActive == true).ToList())
+            {
+                if (!check.Contains(item.SpecialtyId))
+                {
+                    item.IsActive = false;
+                }
+            }
+            check = specialty.SpecialtyServices.Where(p => p.IsActive == true)
+                    .Select(p => p.ServiceId).ToList();
+            //active new
+            foreach (var item in specialtyPutModel.Services.ToList())
+            {
+                if (!check.Contains(item.Id))
+                {
+                    _context.SpecialtyServices.Add(new SpecialtyService()
+                    {
+                        SpecialtyId = id,
+                        ServiceId = item.Id,
+                        IsActive = true
+                    });
+                }
+            }
             _context.Entry(specialtyPutModel).State = EntityState.Modified;
 
             try
@@ -179,7 +206,16 @@ namespace Api.Controllers
             specialty.Name = specialtyPostModel.Name;
             specialty.Image = "freelancervn.somee.com/api/images/assets/" + newname;
             await _context.SaveChangesAsync();
-
+            foreach (var item in specialtyPostModel.Services.ToList())
+            {
+                _context.SpecialtyServices.Add(new SpecialtyService()
+                {
+                    SpecialtyId = specialty.Id,
+                    ServiceId = item.Id,
+                    IsActive = true
+                });
+            }
+            await _context.SaveChangesAsync();
             return specialty;
         }
 

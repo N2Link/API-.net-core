@@ -88,10 +88,41 @@ namespace Api.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutService(int id, [FromBody]string name)
+        public async Task<IActionResult> PutService(int id, ServicePost servicePost)
         {
-            var service = _context.Services.Find(id);
-            service.Name = name;
+            var service = _context.Services.Include(p=>p.SpecialtyServices)
+                .SingleOrDefault(p=>p.Id == id);
+            if(service == null)
+            {
+                return BadRequest();
+            }
+            service.Name = servicePost.Name;
+            List<int> check = new List<int>();
+            check = servicePost.Specialties.Select(p => p.Id).ToList();
+            //unActive 
+            foreach (var item in service.SpecialtyServices.Where(p=>p.IsActive == true).ToList())
+            {
+                if (!check.Contains(item.SpecialtyId))
+                {
+                    item.IsActive = false;
+                }
+            }
+            check = service.SpecialtyServices.Where(p => p.IsActive == true)
+                    .Select(p => p.SpecialtyId).ToList();
+            //active new
+            foreach (var item in servicePost.Specialties.ToList())
+            {
+                if (!check.Contains(item.Id))
+                {
+                    _context.SpecialtyServices.Add(new SpecialtyService()
+                    {
+                        ServiceId = id,
+                        SpecialtyId = item.Id,
+                        IsActive = true
+                    });
+                }
+            }
+
             _context.Entry(service).State = EntityState.Modified;
 
             try
@@ -117,11 +148,24 @@ namespace Api.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPost]
-        public async Task<ActionResult<Api.Models.Service>> PostService([FromBody]string name)
+        public async Task<ActionResult<Api.Models.Service>> PostService([FromBody]ServicePost servicePost)
         {
-            _context.Services.Add(new Models.Service() {Name = name, IsActive = true });
+            Api.Models.Service service = new Models.Service() { Name = servicePost.Name, IsActive = true };
+            _context.Services.Add(service);
             await _context.SaveChangesAsync();
 
+            List<SpecialtyService> list = new List<SpecialtyService>();
+            foreach (var item in servicePost.Specialties)
+            {
+                list.Add(new SpecialtyService()
+                {
+                    ServiceId = service.Id,
+                    SpecialtyId = item.Id,
+                    IsActive = true
+                });
+            }
+            _context.SpecialtyServices.AddRange(list);
+            await _context.SaveChangesAsync();
             return Ok();
         }
 
