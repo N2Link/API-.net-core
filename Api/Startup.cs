@@ -21,6 +21,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Microsoft.EntityFrameworkCore.InMemory;
+
 
 namespace Api
 {
@@ -43,7 +45,7 @@ namespace Api
             services.AddDbContext<FreeLancerVNContext>(option =>
             option.UseSqlServer(new ConfigurationBuilder()
             .AddJsonFile("appsettings.json").Build().GetSection("ConnectionStrings")["FreeLancerVNDB"]));
-
+            
             services.AddControllers().AddNewtonsoftJson(options =>
                 options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 

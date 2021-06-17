@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Api.Enities;
 using Api.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +19,8 @@ namespace Api.Controllers
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors]
+
     public class ImagesController : ControllerBase
     {
         IWebHostEnvironment _webHostEnvironment;
@@ -116,7 +119,7 @@ namespace Api.Controllers
             {
                 try
                 {
-                    System.IO.File.Delete(rootpath + "//Avatars//"+nameDelete);
+                    System.IO.File.Delete(rootpath + "\\Avatars\\"+nameDelete);
                 }
                 catch (Exception)
                 {

@@ -10,12 +10,15 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
 using Api.Enities;
 using Api.Helpers;
+using Microsoft.AspNetCore.Cors;
 
 namespace Api.Controllers
 {
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors]
+
     public class AccountsController : ControllerBase
     {
         private readonly FreeLancerVNContext _context;
@@ -80,7 +83,7 @@ namespace Api.Controllers
                 .Include(p => p.Specialty)
                 .Include(p => p.RatingFreelancers)
                 .Include(p => p.Level)
-                .Where(p => p.Name.Contains(search)
+                .Where(p => (search==null || p.Name.Contains(search))
                 &&(provinceId == "00"|| p.ProvinceId == provinceId)
                 &&(levelId == 0||p.LevelId==levelId)
                 &&(specialtyId == 0||p.SpecialtyId == specialtyId)
@@ -109,6 +112,8 @@ namespace Api.Controllers
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             var account = await _context.Accounts
                 .Include(p=>p.JobFreelancers).ThenInclude(p=>p.Renter)
+                .Include(p => p.JobFreelancers).ThenInclude(p => p.OfferHistories)
+                .Include(p=>p.JobFreelancers).ThenInclude(p=>p.S).ThenInclude(p=>p.Specialty).AsSplitQuery()
                 .SingleOrDefaultAsync(p => p.Id == id && p.Email == email);
             if (account == null)
             {
@@ -131,6 +136,7 @@ namespace Api.Controllers
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             var account = await _context.Accounts
                 .Include(p=>p.JobFreelancers).ThenInclude(p=>p.Renter)
+                .Include(p => p.JobFreelancers).ThenInclude(p => p.OfferHistories)
                 .SingleOrDefaultAsync(p => p.Id == id && p.Email == email);
             if (account == null)
             {
@@ -159,6 +165,8 @@ namespace Api.Controllers
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             var account = await _context.Accounts
                 .Include(p => p.JobFreelancers).ThenInclude(p => p.Renter)
+                .Include(p => p.JobFreelancers).ThenInclude(p => p.OfferHistories)
+                .Include(p => p.JobFreelancers).ThenInclude(p => p.S).ThenInclude(p => p.Specialty).AsSplitQuery()
                 .SingleOrDefaultAsync(p => p.Id == id && p.Email == email);
             if (account == null)
             {
@@ -184,8 +192,10 @@ namespace Api.Controllers
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             var account = await _context.Accounts
-                .Include(p => p.JobRenters)
-                .ThenInclude(p => p.Freelancer)
+                .Include(p => p.JobRenters).ThenInclude(p => p.Freelancer) 
+                .Include(p => p.JobRenters).ThenInclude(p => p.OfferHistories)
+                .Include(p => p.JobRenters).ThenInclude(p => p.S).ThenInclude(p => p.Specialty).AsSplitQuery()
+
                 .SingleOrDefaultAsync(p => p.Id == id && p.Email == email);
             if (account == null)
             {
@@ -207,15 +217,16 @@ namespace Api.Controllers
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             var account = await _context.Accounts
-                .Include(p => p.JobRenters)
-                .ThenInclude(p => p.Freelancer)
+                .Include(p => p.JobRenters).ThenInclude(p => p.Freelancer)
+                .Include(p => p.JobRenters).ThenInclude(p => p.OfferHistories)
+                .Include(p => p.JobRenters).ThenInclude(p => p.S).ThenInclude(p => p.Specialty).AsSplitQuery()
                 .SingleOrDefaultAsync(p => p.Id == id && p.Email == email);
             if (account == null)
             {
                 return NotFound();
             }
             var JobRenters = account.JobRenters
-                .Where(p=>p.Deadline<=DateTime.Now && p.Status =="Waiting")
+                .Where(p=>p.Deadline > DateTime.Now && p.Status =="Waiting")
                 .Select(p=> new JobForListResponse(p)).ToList();
             return JobRenters;
         }    
@@ -232,8 +243,9 @@ namespace Api.Controllers
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             var account = await _context.Accounts
-                .Include(p => p.JobRenters)
-                .ThenInclude(p => p.Freelancer)
+                .Include(p => p.JobRenters).ThenInclude(p => p.Freelancer)
+                .Include(p => p.JobRenters).ThenInclude(p => p.OfferHistories)
+                .Include(p => p.JobRenters).ThenInclude(p => p.S).ThenInclude(p => p.Specialty).AsSplitQuery()
                 .SingleOrDefaultAsync(p => p.Id == id && p.Email == email);
             if (account == null)
             {
@@ -257,15 +269,16 @@ namespace Api.Controllers
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             var account = await _context.Accounts
-                .Include(p => p.JobRenters)
-                .ThenInclude(p => p.Freelancer)
+                .Include(p => p.JobRenters).ThenInclude(p => p.Freelancer)
+                .Include(p => p.JobRenters).ThenInclude(p => p.OfferHistories)
+                .Include(p => p.JobRenters).ThenInclude(p => p.S).ThenInclude(p => p.Specialty).AsSplitQuery()
                 .SingleOrDefaultAsync(p => p.Id == id && p.Email == email);
             if (account == null)
             {
                 return NotFound();
             }
             var JobRenters = account.JobRenters
-                .Where(p => (p.Deadline > DateTime.Now && p.Status != "Waiting")
+                .Where(p => (p.Deadline < DateTime.Now && p.Status != "Waiting")
                 || p.Status == "Done" || p.Status == "Closed" || p.Status =="Cancelled")
                 .Select(p=> new JobForListResponse(p)).ToList();
             return JobRenters;
@@ -333,6 +346,7 @@ namespace Api.Controllers
         {
             var account = _context.Accounts
                 .Include(p => p.OfferHistories).ThenInclude(p => p.Job).ThenInclude(p=>p.Renter)
+                .Include(p => p.OfferHistories).ThenInclude(p => p.Job).ThenInclude(p=>p.S.Specialty)
                 .SingleOrDefault(p => p.Id == id);
             if (account == null)
             {
@@ -351,8 +365,11 @@ namespace Api.Controllers
             {
                 return BadRequest();
             }
-            return account.OfferHistories.Select(p => new OfferHistoryResponse(p, 1)).ToList();
-        }        
+            return account.OfferHistories.Where(p=>p.Job.Status=="Waiting" && p.Job.Deadline>DateTime.Now)
+                .Select(p => new OfferHistoryResponse(p, 1)).ToList();
+        }            
+
+    
         //[HttpGet("pagination")]
                  //public async Task<ActionResult> GetPagination(int page, int count)
                  //{

@@ -309,7 +309,7 @@ namespace Api.Models
                     .HasColumnType("datetime")
                     .HasColumnName("Create_at");
 
-                entity.Property(e => e.Deadline).HasColumnType("date");
+                entity.Property(e => e.Deadline).HasColumnType("datetime");
 
                 entity.Property(e => e.Details)
                     .IsRequired()
@@ -421,6 +421,8 @@ namespace Api.Models
 
                 entity.Property(e => e.Id).HasColumnName("ID");
 
+                entity.Property(e => e.FreelancerId).HasColumnName("FreelancerID");
+
                 entity.Property(e => e.JobId).HasColumnName("JobID");
 
                 entity.Property(e => e.Message1)
@@ -435,6 +437,14 @@ namespace Api.Models
                 entity.Property(e => e.Status)
                     .IsRequired()
                     .HasMaxLength(20);
+
+                entity.Property(e => e.Time).HasColumnType("datetime");
+
+                entity.HasOne(d => d.Freelancer)
+                    .WithMany(p => p.MessageFreelancers)
+                    .HasForeignKey(d => d.FreelancerId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK__Message__Freelan__66EA454A");
 
                 entity.HasOne(d => d.Job)
                     .WithMany(p => p.Messages)

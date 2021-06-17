@@ -13,7 +13,10 @@ namespace Api.Models
         public int ReceiveId { get; set; }
         public string Message1 { get; set; }
         public string Status { get; set; }
+        public DateTime Time { get; set; }
+        public int FreelancerId { get; set; }
 
+        public virtual Account Freelancer { get; set; }
         public virtual Job Job { get; set; }
         public virtual Account Receive { get; set; }
         public virtual Account Sender { get; set; }

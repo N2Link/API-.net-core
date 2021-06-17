@@ -32,6 +32,7 @@ namespace Api.Models
         public int ServiceId { get; set; }
         public string ProvinceId { get; set; }
         public string Status { get; set; }
+        public int Price { get; set; }
 
         public virtual FormOfWork Form { get; set; }
         public virtual Account Freelancer { get; set; }

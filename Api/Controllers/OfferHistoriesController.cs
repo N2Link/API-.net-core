@@ -9,12 +9,15 @@ using Api.Models;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
 using Api.Enities;
+using Microsoft.AspNetCore.Cors;
 
 namespace Api.Controllers
 {
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors]
+
     public class OfferHistoriesController : ControllerBase
     {
         private readonly FreeLancerVNContext _context;
@@ -25,11 +28,11 @@ namespace Api.Controllers
         }
 
 
-        // GET: api/OfferHistories/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<OfferHistory>> GetOfferHistory(int id)
+        [HttpGet]
+        public async Task<ActionResult<OfferHistory>> GetOfferHistory(int freelancerId , int jobId)
         {
-            var offerHistory = await _context.OfferHistories.FindAsync(id);
+            var offerHistory = await _context.OfferHistories.
+                SingleOrDefaultAsync(p=>p.FreelancerId == freelancerId && p.JobId == jobId);
 
             if (offerHistory == null)
             {
@@ -45,12 +48,6 @@ namespace Api.Controllers
             {
                 return BadRequest();
             }
-            var freelancer = _context.Accounts.Find(offerHistoryPost.FreelancerId);
-            if (freelancer == null)
-            {
-                return BadRequest();
-            }
-
             String jwt = Request.Headers["Authorization"];
             jwt = jwt.Substring(7);
             //Decode jwt and get payload
@@ -60,19 +57,22 @@ namespace Api.Controllers
             var tokenS = jsonToken as JwtSecurityToken;
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
-            if (email != freelancer.Email || freelancer.IsAccuracy == false)
+            var freelancer = await _context.Accounts.SingleOrDefaultAsync(p => p.Email == email);
+            if(freelancer == null)
             {
                 return BadRequest();
             }
+
             if (_context.OfferHistories
-                .Where(p => p.FreelancerId == freelancer.Id && offerHistoryPost.JobId == p.JobId).Count() >= 3)
+                .SingleOrDefault(p => p.FreelancerId == freelancer.Id && offerHistoryPost.JobId == p.JobId)!=null)
             {
-                return Ok("Oops... You have only three times to offer this job.");
+                return BadRequest(new {message = "Oops... you have offered this job" });
             }
+
             var offerHistory = new OfferHistory()
             {
                 JobId = offerHistoryPost.JobId,
-                FreelancerId = offerHistoryPost.FreelancerId,
+                FreelancerId = freelancer.Id,
                 Description = offerHistoryPost.Description,
                 ExpectedDay = offerHistoryPost.ExpectedDay,
                 OfferPrice = offerHistoryPost.OfferPrice,

@@ -17,20 +17,24 @@ namespace Api.Enities
             Deadline = job.Deadline;
             CreatAt = job.CreateAt;
             Cellingprice = job.Cellingprice;
-            Details = job.Details;
             Floorprice = job.Floorprice;
             Status = job.Status;
+            Specialty = new ResponseIdName(job.S.Specialty);
             Freelancer = job.Freelancer==null?null : new ResponseIdName(job.Freelancer);
             Renter = job.Renter==null?null : new ResponseIdName(job.Renter);
+            AvatarUrl = job.Renter == null ? null : job.Renter.AvatarUrl;
+            BidCount = job.OfferHistories.Count();
         }
         public int Id { get; set; }
         public string Name { get; set; }
         public DateTime Deadline { get; set; }
         public DateTime CreatAt { get; set; }
-        public string Details { get; set; }
         public int Floorprice { get; set; }
         public int Cellingprice { get; set; }
         public string Status{ get; set; }
+        public string AvatarUrl { get; set; }
+        public int BidCount { get; set; }
+        public ResponseIdName Specialty { get; set; }
         public ResponseIdName Freelancer { get; set; }
         public ResponseIdName Renter { get; set; }
     }

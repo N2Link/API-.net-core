@@ -9,12 +9,15 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
 using Api.Enities;
 using Api.Helpers;
+using Microsoft.AspNetCore.Cors;
 
 namespace Api.Controllers
 {
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors]
+
     public class JobsController : ControllerBase
     {
         private readonly FreeLancerVNContext _context;
@@ -36,10 +39,19 @@ namespace Api.Controllers
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             var account = await _context.Accounts.SingleOrDefaultAsync(p => p.Email == email);
-            if (account == null) { return NotFound(); }
-
-            return await _context.Jobs.Include(p => p.Renter).OrderByDescending(p => p.CreateAt)
-                .Where(p=>p.RenterId!= account.Id)
+            if (account == null) { return BadRequest(); }
+            if(account.RoleId == 1)
+            {
+                return await _context.Jobs.Include(p => p.Renter).Include(p=>p.OfferHistories)
+                    .Include(p=>p.S).ThenInclude(p=>p.Specialty).AsSplitQuery()
+                .OrderByDescending(p => p.CreateAt)
+                .Select(p => new JobForListResponse(p)).ToListAsync();
+            }
+            return await _context.Jobs.Include(p => p.Renter).Include(p=>p.OfferHistories)
+                    .Include(p => p.S).ThenInclude(p => p.Specialty).AsSplitQuery()
+                .OrderByDescending(p => p.CreateAt)
+                .Where(p=>p.RenterId!= account.Id && p.Status == "Waiting" 
+                && p.Deadline <= DateTime.Now)
                 .Select(p => new JobForListResponse(p)).ToListAsync();
         }
 
@@ -62,8 +74,9 @@ namespace Api.Controllers
             var account = await _context.Accounts.SingleOrDefaultAsync(p => p.Email == email);
             if (account == null) { return NotFound(); }
 
-            var list = await _context.Jobs                
-                .Where(p=>p.Name.Contains(search)
+            var list = await _context.Jobs.Include(p => p.OfferHistories)
+                .Include(p => p.S).ThenInclude(p => p.Specialty).AsSplitQuery()
+                .Where(p=>(search == null|| p.Name.Contains(search))
                 &&p.Floorprice>=floorPrice
                 &&p.Cellingprice<=cellingPrice
                 &&(specialtyId == 0|| p.SpecialtyId==specialtyId)
@@ -71,7 +84,9 @@ namespace Api.Controllers
                 &&(payFormId==0||p.PayformId == payFormId)
                 &&(provinceId == "00" || p.ProvinceId == provinceId)
                 && (formOfWorkId == 0|| p.FormId == formOfWorkId)
-                &&(typeOfWorkId== 0 || p.TypeId == typeOfWorkId))
+                &&(typeOfWorkId== 0 || p.TypeId == typeOfWorkId)
+                &&p.Status=="Waiting"&&p.Deadline<= DateTime.Now)
+                .OrderByDescending(p=>p.CreateAt)
                 .Select(p=> new JobForListResponse(p))
                 .ToListAsync();
             return list;
@@ -191,6 +206,19 @@ namespace Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<JobResponseModel>> GetJob(int id)
         {
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var account = await _context.Accounts.Include(p=>p.OfferHistories)
+                .SingleOrDefaultAsync(p => p.Email == email);
+            if (account == null) { return BadRequest(); }
+
             var job = await _context.Jobs
                 .Include(p => p.Renter)
                 .Include(p => p.Freelancer)
@@ -202,13 +230,16 @@ namespace Api.Controllers
                 .Include(p => p.Payform)
                 .Include(p => p.JobSkills).ThenInclude(p => p.Skill)
                 .Include(p => p.Province)
+                .Include(p => p.OfferHistories)
                 .SingleOrDefaultAsync(p=>p.Id == id);
 
             if (job == null)
             {
                 return NotFound();
             }
-            var jobresponse = new JobResponseModel(job);            
+            var check = account.OfferHistories.Select(p => p.JobId).Contains(job.Id);
+            var jobresponse = new JobResponseModel(job,check);
+
             return jobresponse;
         }
         
@@ -295,12 +326,14 @@ namespace Api.Controllers
         //}
         
         //get offerhistory
-        [HttpGet("{id}/offerhistorys")]
+        [HttpGet("{id}/offerhistories")]
         public ActionResult<List<OfferHistoryResponse>> GetJobOfferHistories(int id)
         {
             var job = _context.Jobs
-                .Include(p => p.Freelancer).ThenInclude(p => p.RatingFreelancers).AsSplitQuery()
-                .Include(p => p.OfferHistories)
+                .Include(p=>p.Renter)
+                .Include(p => p.OfferHistories).ThenInclude(p => p.Freelancer).ThenInclude(p => p.RatingFreelancers).AsSplitQuery()
+                .Include(p => p.OfferHistories).ThenInclude(p => p.Freelancer).ThenInclude(p => p.Specialty).AsSplitQuery()
+                .Include(p => p.OfferHistories).ThenInclude(p => p.Freelancer).ThenInclude(p => p.Level).AsSplitQuery()
                 .SingleOrDefault(p => p.Id == id);
             if (job == null)
             {
@@ -333,7 +366,12 @@ namespace Api.Controllers
                 .Include(p => p.OfferHistories).ThenInclude(p => p.Freelancer)
                 .Include(p => p.Renter)
                 .SingleOrDefaultAsync(p => p.Id == id);
+
             if (job == null) { NotFound(); }
+            if(!(job.Status != "Waiting" && job.Deadline > DateTime.Now))
+            {
+                return BadRequest(new { message = "This job is not during in waiting for bid status" });
+            }
 
             String jwt = Request.Headers["Authorization"];
             jwt = jwt.Substring(7);
@@ -344,12 +382,19 @@ namespace Api.Controllers
             var tokenS = jsonToken as JwtSecurityToken;
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+
             var account = job.Renter;
+
             if (account.Email != email)
             {
                 return BadRequest();
             }
+
             job.Status = "In progress";
+            if (!job.OfferHistories.Select(p => p.FreelancerId).Contains(freelancerid))
+            {
+                return BadRequest(new {message = "Freelancer didn't offer this job" });
+            }
             job.FreelancerId = freelancerid;
             _context.Entry(job).State = EntityState.Modified;
             try

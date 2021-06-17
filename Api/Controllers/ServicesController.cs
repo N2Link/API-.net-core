@@ -9,12 +9,15 @@ using Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Api.Enities;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Cors;
 
 namespace Api.Controllers
 {
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors]
+
     public class ServicesController : ControllerBase
     {
         private readonly FreeLancerVNContext _context;
@@ -26,14 +29,15 @@ namespace Api.Controllers
 
         // GET:
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ResponseIdName>>> GetServices()
+        public async Task<ActionResult<IEnumerable<ServiceResponse>>> GetServices()
         {
             return await _context.Services
+                .Include(p=>p.SpecialtyServices).ThenInclude(p=>p.Specialty)
                 .Where(p=>p.IsActive==true)
-                .Select(p=> new ResponseIdName(p)).ToListAsync();
+                .Select(p=> new ServiceResponse(p)).ToListAsync();
         }    
         [HttpGet("adminmode")]
-        public async Task<ActionResult<IEnumerable<Api.Models.Service>>> GetServicesadmin()
+        public async Task<ActionResult<IEnumerable<ServiceResponse>>> GetServicesadmin()
         {
             String jwt = Request.Headers["Authorization"];
             jwt = jwt.Substring(7);
@@ -47,10 +51,9 @@ namespace Api.Controllers
             var admin = await _context.Accounts.SingleOrDefaultAsync(p => p.Email == email && p.RoleId == 1);
             if(admin == null) { return BadRequest(); }
             return await _context.Services
-                .Select(p=> new Api.Models.Service() 
-                {
-                    Id = p.Id, Name = p.Name, IsActive = p.IsActive 
-                }).ToListAsync();
+                .Include(p => p.SpecialtyServices).ThenInclude(p => p.Specialty)
+                .Where(p => p.IsActive == true)
+                .Select(p => new ServiceResponse(p)).ToListAsync();
         }
         //GET Specialtys
         [HttpGet("{id}/specialtys")]
@@ -97,17 +100,24 @@ namespace Api.Controllers
                 return BadRequest();
             }
             service.Name = servicePost.Name;
+
             List<int> check = new List<int>();
             check = servicePost.Specialties.Select(p => p.Id).ToList();
-            //unActive 
-            foreach (var item in service.SpecialtyServices.Where(p=>p.IsActive == true).ToList())
+
+            //un-re Active 
+            foreach (var item in service.SpecialtyServices.ToList())
             {
                 if (!check.Contains(item.SpecialtyId))
                 {
                     item.IsActive = false;
                 }
-            }
-            check = service.SpecialtyServices.Where(p => p.IsActive == true)
+                else
+                {
+                    item.IsActive = true;
+                }
+            }    
+
+            check = service.SpecialtyServices
                     .Select(p => p.SpecialtyId).ToList();
             //active new
             foreach (var item in servicePost.Specialties.ToList())

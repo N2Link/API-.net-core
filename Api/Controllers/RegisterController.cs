@@ -11,12 +11,15 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Api.Helpers;
 using Api.Models;
+using Microsoft.AspNetCore.Cors;
 
 namespace Api.Controllers
 {
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors]
+
     public class RegisterController : ControllerBase
     {
         IUserService userService;

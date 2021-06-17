@@ -11,12 +11,15 @@ using Api.Enities;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Hosting;
 using System.IO;
+using Microsoft.AspNetCore.Cors;
 
 namespace Api.Controllers
 {
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors]
+
     public class SpecialtiesController : ControllerBase
     {
         private readonly FreeLancerVNContext _context;
@@ -32,17 +35,11 @@ namespace Api.Controllers
 
         // GET: api/Specialties
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Specialty>>> GetSpecialties()
+        public async Task<ActionResult<IEnumerable<SpecialtyResponse>>> GetSpecialties()
         {
-            return await _context.Specialties
+            return await _context.Specialties.Include(p=>p.SpecialtyServices).ThenInclude(p=>p.Service)
                 .Where(p => p.IsActive == true)
-                .Select(p => new Specialty()
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Image = p.Image,
-                    IsActive = true
-                })
+                .Select(p => new SpecialtyResponse(p))
                 .ToListAsync();
         }
 
@@ -61,12 +58,8 @@ namespace Api.Controllers
             var admin = await _context.Accounts.SingleOrDefaultAsync(p => p.Email == email && p.RoleId == 1);
             if (admin == null) { return BadRequest(); }
             return await _context.Specialties
-                .Select(p => new Specialty()
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Image = p.Image
-                }).ToListAsync();
+                .Include(p=>p.SpecialtyServices)
+                .ThenInclude(p=>p.Service).ToListAsync();
         }
         //GET Specialtys
         [HttpGet("{id}/services")]
@@ -89,9 +82,11 @@ namespace Api.Controllers
         
         // GET: api/Specialties/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Specialty>> GetSpecialty(int id)
+        public async Task<ActionResult<SpecialtyResponse>> GetSpecialty(int id)
         {
-            var specialty = await _context.Specialties.FindAsync(id);
+            var specialty = await _context.Specialties
+                .Include(p => p.SpecialtyServices).ThenInclude(p => p.Service)
+                .SingleOrDefaultAsync(p => p.Id == id);
 
             if (specialty == null)
             {
@@ -99,7 +94,7 @@ namespace Api.Controllers
             }
             specialty.Accounts = null;
             specialty.SpecialtyServices = null;
-            return specialty;
+            return new SpecialtyResponse(specialty);
         }
 
         // PUT: api/Specialties/5
@@ -124,16 +119,16 @@ namespace Api.Controllers
                     .Substring(specialty.Image.LastIndexOf("/") + 1);
                 try
                 {
-                    System.IO.File.Delete(rootpath + "\\Images\\" + nameDelete);
+                    System.IO.File.Delete(rootpath + "\\Assets\\" + nameDelete);
                 }
                 catch (Exception) { }
 
-                newname = specialtyPutModel.ImageName + "_"+id;
+                newname = id+"_"+specialtyPutModel.ImageName;
 
                 using (FileStream fs = System.IO.File.Create(rootpath + "\\Assets\\" + newname))
                 {
                     fs.Close();
-                    System.IO.File.WriteAllBytes(rootpath + "\\Images" + newname, Convert.FromBase64String(specialtyPutModel.ImageBase64));
+                    System.IO.File.WriteAllBytes(rootpath + "\\Assets\\" + newname, Convert.FromBase64String(specialtyPutModel.ImageBase64));
                 }
                 specialty.Image = "freelancervn.somee.com/api/images/assets/" + newname;
             }
@@ -144,11 +139,15 @@ namespace Api.Controllers
             List<int> check = new List<int>();
             check = specialtyPutModel.Services.Select(p => p.Id).ToList();
             //unActive 
-            foreach (var item in specialty.SpecialtyServices.Where(p => p.IsActive == true).ToList())
+            foreach (var item in specialty.SpecialtyServices.ToList())
             {
                 if (!check.Contains(item.SpecialtyId))
                 {
                     item.IsActive = false;
+                }
+                else
+                {
+                    item.IsActive = true;
                 }
             }
             check = specialty.SpecialtyServices.Where(p => p.IsActive == true)
@@ -196,11 +195,12 @@ namespace Api.Controllers
             var specialty = new Specialty() { Name = specialtyPostModel.Name };
             _context.Specialties.Add(specialty);
             await _context.SaveChangesAsync();
-            string newname = specialtyPostModel.Name + "_" + specialty.Id;
+            string newname = specialty.Id+"_"+specialtyPostModel.ImageName;
+
             using (FileStream fs = System.IO.File.Create(rootpath + newname))
             {
                 fs.Close();
-                System.IO.File.WriteAllBytes(rootpath + "\\Images\\" +newname,
+                System.IO.File.WriteAllBytes(rootpath + "\\Assets\\" +newname,
                     Convert.FromBase64String(specialtyPostModel.ImageBase64));
             }
             specialty.Name = specialtyPostModel.Name;

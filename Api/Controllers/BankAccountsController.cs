@@ -9,12 +9,15 @@ using Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Api.Enities;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Cors;
 
 namespace Api.Controllers
 {
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors]
+
     public class BankAccountsController : ControllerBase
     {
         private readonly FreeLancerVNContext _context;

@@ -11,12 +11,15 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Hosting;
 using System.IO;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 
 namespace Api.Controllers
 {
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors]
+
     public class CapacityProfilesController : ControllerBase
     {
         private readonly FreeLancerVNContext _context;
@@ -98,12 +101,12 @@ namespace Api.Controllers
             {
                 string rootpath = _webHostEnvironment.WebRootPath;
 
-                newname = cpEditModel.ImageName+"_"+capacityProfile.Id;
+                newname = capacityProfile.Id+"_"+cpEditModel.ImageName;
 
-                using (FileStream fs = System.IO.File.Create(rootpath +"\\Images"+ newname))
+                using (FileStream fs = System.IO.File.Create(rootpath +"\\Images\\"+ newname))
                 {
                     fs.Close();
-                    System.IO.File.WriteAllBytes(rootpath + "\\Images" + newname, Convert.FromBase64String(cpEditModel.ImageBase64));
+                    System.IO.File.WriteAllBytes(rootpath + "\\Images\\" + newname, Convert.FromBase64String(cpEditModel.ImageBase64));
                 }
                 if (capacityProfile.ImageUrl != null)
                 {
@@ -216,11 +219,11 @@ namespace Api.Controllers
                 .SingleOrDefault(p => p.Id == capacityProfile.Id);
             //create image
             string rootpath = _webHostEnvironment.WebRootPath;
-            var newname = cProfilePostModel.ImageName +"_"+ capacityProfile.Id;
-            using (FileStream fs = System.IO.File.Create(rootpath + "\\Images" + newname))
+            var newname = capacityProfile.Id+"_"+cProfilePostModel.ImageName ;
+            using (FileStream fs = System.IO.File.Create(rootpath + "\\Images\\" + newname))
             {
                 fs.Close();
-                System.IO.File.WriteAllBytes(rootpath + "\\Images" + newname, Convert.FromBase64String(cProfilePostModel.ImageBase64));
+                System.IO.File.WriteAllBytes(rootpath + "\\Images\\" + newname, Convert.FromBase64String(cProfilePostModel.ImageBase64));
             }
             capacityProfile.ImageUrl = "freelancervn.somee.com/api/images/images/" + newname;
             _context.SaveChanges();

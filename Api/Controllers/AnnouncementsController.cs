@@ -9,12 +9,15 @@ using Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using System.IdentityModel.Tokens.Jwt;
 using Api.Enities;
+using Microsoft.AspNetCore.Cors;
 
 namespace Api.Controllers
 {
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors]
+
     public class AnnouncementsController : ControllerBase
     {
         private readonly FreeLancerVNContext _context;

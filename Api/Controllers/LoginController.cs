@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Api.Helpers;
 using Microsoft.AspNetCore.Cors;
-
 namespace Api.Controllers
 {
     [Authorize]

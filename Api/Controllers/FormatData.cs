@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Api.Models;
 using Microsoft.AspNetCore.Http;
@@ -17,6 +18,14 @@ namespace Api.Controllers
         {
             _context = context;
         }
+        [HttpGet("getclaim")]
+        public ActionResult getclaim()
+        {
+            ClaimsPrincipal principal = HttpContext.User;
+            return Ok(principal.Claims);
+            //return Ok();
+        }
+
         [HttpGet]
         public String FormatDataDB()
         {

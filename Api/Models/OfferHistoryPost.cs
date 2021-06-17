@@ -8,7 +8,6 @@ namespace Api.Models
     public class OfferHistoryPost
     {
         public int JobId { get; set; }
-        public int FreelancerId { get; set; }
         public int OfferPrice { get; set; }
         public string ExpectedDay { get; set; }
         public string Description { get; set; }

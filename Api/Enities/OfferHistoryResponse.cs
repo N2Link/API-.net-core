@@ -18,12 +18,14 @@ namespace Api.Enities
             this.TodoList = offerHistory.TodoList;
             try
             {
-                this.Freelancer = type ==2 ?new AccountForListResponse(offerHistory.Freelancer):null;
+                this.Job = type ==1? new JobForListResponse(offerHistory.Job):null;
             }
             catch (Exception) { }
+
+
             try
             {
-                this.Job = type ==1? new JobForListResponse(offerHistory.Job):null;
+                this.Freelancer = type == 2 ? new AccountForListResponse(offerHistory.Freelancer) : null;
             }
             catch (Exception) { }
         }
