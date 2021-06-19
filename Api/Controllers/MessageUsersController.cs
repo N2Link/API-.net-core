@@ -22,8 +22,7 @@ namespace Api.Controllers
             _context = context;
         }
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<MessageUserResponse>>> 
-            GetMessageUsers([FromBody] MessageUser messageUser )
+        public async Task<ActionResult<IEnumerable<MessageUserResponse>>> GetMessageUsers( )
         {
             string jwt = Request.Headers["Authorization"];
             jwt = jwt.Substring(7);
@@ -38,69 +37,42 @@ namespace Api.Controllers
                 
             if (account == null) { return NotFound(); }
 
-            var listMessage = _context.Messages.Include(p => p.Freelancer)
-                .Include(p=>p.Job).ToList();
+            var listMessage = _context.Messages
+                .Include(p=>p.Sender).AsSplitQuery()
+                .Include(p => p.Freelancer).AsSplitQuery()
+                .Include(p=>p.Job).ThenInclude(p=>p.Renter).AsSplitQuery().ToList();
 
-            var x = _context.Messages.Include(p=>p.Job)
-                .Where(p=>p.FreelancerId == account.Id || p.Job.RenterId == account.Id)
-                .GroupBy(p => new { p.JobId, p.FreelancerId })
-                .Select(p => new MessageUserResponse
+            var listDistinct = _context.Messages.Include(p => p.Job)
+                .Where(p => p.FreelancerId == account.Id || p.Job.RenterId == account.Id)
+                .Select(p => new { p.JobId, p.FreelancerId }).ToList();
+
+            listDistinct = listDistinct.Distinct().ToList();
+
+            List<MessageUserResponse> list = new List<MessageUserResponse>();
+
+            foreach (var item in listDistinct)
+            {
+                var last = listMessage.Where(p => p.JobId == item.JobId
+                && p.FreelancerId == item.FreelancerId).Last();
+
+                AccountForListResponse toUser = account.Id == last.FreelancerId
+                                    ? new AccountForListResponse(last.Job.Renter)
+                                    : new AccountForListResponse(last.Freelancer);
+
+                MessageUserResponse messageUserResponse = new MessageUserResponse()
                 {
-                    Job = new ResponseIdName(_context.Jobs.Find(p.Key.JobId)),
-                    Freelancer = new ResponseIdName(_context.Jobs.Find(p.Key.FreelancerId)),
-                    LastSender = new ResponseIdName(listMessage.Where(x =>
-                    x.JobId == p.Key.JobId
-                    && x.FreelancerId == p.Key.FreelancerId)
-                    .Select(p => p.Freelancer).Last()),
+                    Job = new ResponseIdName(last.Job),
+                    Freelancer = new ResponseIdName(last.Freelancer),
+                    ToUser = toUser,
+                    LastSender = new ResponseIdName(last.Sender),
+                    LastMessage = last.Message1,
+                    Status = last.Status,
+                    Time = last.Time,
+                };
+                list.Add(messageUserResponse);
+            }
 
-                    LastMessage = listMessage.Where(x =>
-                    x.JobId == p.Key.JobId
-                    && x.FreelancerId == p.Key.FreelancerId)
-                    .Select(p => p.Message1).Last(),
-
-                    Time = listMessage.Where(x =>
-                    x.JobId == p.Key.JobId
-                    && x.FreelancerId == p.Key.FreelancerId)
-                    .Select(p => p.Time).Last(),
-
-                    Status = listMessage.Where(x =>
-                    x.JobId == p.Key.JobId
-                    && x.FreelancerId == p.Key.FreelancerId)
-                    .Select(p => p.Status).Last()
-                }).OrderByDescending(p=>p.Time).ToList();
-
-/*            var chatFreelancer = await _context.Messages
-                .Where(p => (p.ReceiveId == account.Id || p.SenderId == account.Id)
-                && (p.Job.FreelancerId == null || p.Job.FreelancerId == account.Id))
-                .ToListAsync();
-
-            var groupFreelancer = chatFreelancer.GroupBy(p => p.Job)
-                .Select(p => new MessageUserResponse()
-                {
-                    Job = new ResponseIdName(p.Key),
-                    LastSender = new ResponseIdName(chatFreelancer
-                    .Where(x => x.JobId == p.Key.Id).Last().Sender),
-                    LastMessage = chatFreelancer.Where(x => x.JobId == p.Key.Id).Last().Message1,
-                    Time = chatFreelancer.Where(x => x.JobId == p.Key.Id).Last().Time,
-                });  
-            
-            var chatRenter = await _context.Messages
-                .Where(p => (p.ReceiveId == account.Id || p.SenderId == account.Id)
-                && p.Job.RenterId ==account.Id)
-                .ToListAsync();
-
-            var groupRenter = chatRenter.GroupBy(p => new (p.Job, p.))
-                .Select(p => new MessageUserResponse()
-                {
-                    Job = new ResponseIdName(p.Key),
-                    LastSender = new ResponseIdName(chatFreelancer
-                    .Where(x => x.JobId == p.Key.Id).Last().Sender),
-                    LastMessage = chatFreelancer.Where(x => x.JobId == p.Key.Id).Last().Message1,
-                    Time = chatFreelancer.Where(x => x.JobId == p.Key.Id).Last().Time,
-                });*/
-
-
-            return x;
+            return list;
         }
     }
 }

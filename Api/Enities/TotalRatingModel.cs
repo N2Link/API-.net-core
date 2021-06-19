@@ -14,10 +14,10 @@ namespace Api.Enities
             {
                 return;
             }
-            this.Avg = Int32.Parse(ratings.Average(p => p.Star).ToString());
+            this.Avg = ratings.Average(p => p.Star);
             Count = ratings.Count();
         }
-        public int Avg { get; set; }
+        public double Avg { get; set; }
         public int Count { get; set; }
 
     }

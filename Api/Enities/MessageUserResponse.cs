@@ -9,6 +9,7 @@ namespace Api.Enities
     {
         public ResponseIdName Job { get; set; }
         public ResponseIdName Freelancer { get; set; }
+        public AccountForListResponse ToUser { get; set; }
         public ResponseIdName LastSender { get; set; }
         public string LastMessage { get; set; }
         public DateTime Time { get; set; }

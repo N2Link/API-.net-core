@@ -51,7 +51,7 @@ namespace Api.Controllers
                     .Include(p => p.S).ThenInclude(p => p.Specialty).AsSplitQuery()
                 .OrderByDescending(p => p.CreateAt)
                 .Where(p=>p.RenterId!= account.Id && p.Status == "Waiting" 
-                && p.Deadline <= DateTime.Now)
+                && p.Deadline > DateTime.Now)
                 .Select(p => new JobForListResponse(p)).ToListAsync();
         }
 
@@ -414,20 +414,45 @@ namespace Api.Controllers
             }
             return Ok();
         }   
-        //Get messages
-        [HttpGet("{id}/messages")]
-        public ActionResult<List<MessageResponse>> Getmessages(int id)
+        ////Get messages
+        //[HttpGet("{id}/messages")]
+        //public ActionResult<List<MessageResponse>> Getmessages(int id)
+        //{
+        //    var job = _context.Jobs
+        //        .Include(p=>p.Messages).ThenInclude(p=>p.Sender)
+        //        .Include(p=>p.Messages).ThenInclude(p=>p.Receive)
+        //        .SingleOrDefault(p => p.Id == id);
+        //    if (job == null)
+        //    {
+        //        return NotFound();
+        //    }
+        //    var account = job.Renter;
+
+        //    String jwt = Request.Headers["Authorization"];
+        //    jwt = jwt.Substring(7);
+        //    //Decode jwt and get payload
+        //    var stream = jwt;
+        //    var handler = new JwtSecurityTokenHandler();
+        //    var jsonToken = handler.ReadToken(stream);
+        //    var tokenS = jsonToken as JwtSecurityToken;
+        //    //I can get Claims using:
+        //    var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+
+        //    if (account.Email != email)
+        //    {
+        //        return BadRequest();
+        //    }
+        //    return job.Messages.Select(p=>new MessageResponse(p)).ToList();
+        //}
+
+        [HttpPut("{id}/putmoney/{money}")]
+        public async Task<ActionResult> PutMoney(int id, int money)
         {
-            var job = _context.Jobs
-                .Include(p=>p.Messages).ThenInclude(p=>p.Sender)
-                .Include(p=>p.Messages).ThenInclude(p=>p.Receive)
-                .SingleOrDefault(p => p.Id == id);
+            var job = _context.Jobs.Find(id);
             if (job == null)
             {
                 return NotFound();
             }
-            var account = job.Renter;
-
             String jwt = Request.Headers["Authorization"];
             jwt = jwt.Substring(7);
             //Decode jwt and get payload
@@ -438,11 +463,25 @@ namespace Api.Controllers
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
 
-            if (account.Email != email)
+            var renter = await _context.Accounts
+                .SingleOrDefaultAsync(p => p.Email == email);
+            if(renter == null)
             {
-                return BadRequest();
+                return BadRequest(new { message = "Bad JWT!" });
             }
-            return job.Messages.Select(p=>new MessageResponse(p)).ToList();
+            if(job.RenterId!= renter.Id)
+            {
+                return BadRequest(new { message = "You are not this renter" });
+            }
+            if (renter.Balance < money)
+            {
+                return BadRequest(new { message = "Your account is not enough money " });
+            }
+            renter.Balance -= money;
+            job.Price += money;
+            await _context.SaveChangesAsync();
+            return Ok();
+
         }
         //put close .. renter
         [HttpPut("{id}/close")]

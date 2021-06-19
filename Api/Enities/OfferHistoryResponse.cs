@@ -19,9 +19,31 @@ namespace Api.Enities
             try
             {
                 this.Job = type ==1? new JobForListResponse(offerHistory.Job):null;
+
+                if (Job.Freelancer == null)
+                {
+                    if(Job.Deadline > DateTime.Now)
+                    {
+                        this.Status = "Waiting";
+                    }
+                    else
+                    {
+                        this.Status = "Denied";
+                    }
+                }
+                else
+                {
+                    if(Job.Freelancer.Id == FreelancerId)
+                    {
+                        this.Status = "Assigned";
+                    }
+                    else
+                    {
+                        this.Status = "Denied";
+                    }
+                }
             }
             catch (Exception) { }
-
 
             try
             {

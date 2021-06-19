@@ -340,9 +340,38 @@ namespace Api.Controllers
                         .ToListAsync();
         }
 
-        //get offerhistory 
+        // get offerhistory
         [HttpGet("{id}/offerhistories")]
         public ActionResult<List<OfferHistoryResponse>> GetFreelancerOfferHistories(int id)
+        {
+            var account = _context.Accounts
+                .Include(p => p.OfferHistories).ThenInclude(p => p.Job).ThenInclude(p => p.Renter)
+                .Include(p => p.OfferHistories).ThenInclude(p => p.Job).ThenInclude(p => p.S.Specialty)
+                .SingleOrDefault(p => p.Id == id);
+            if (account == null)
+            {
+                return NotFound();
+            }
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            if (account.Email != email)
+            {
+                return BadRequest();
+            }
+            var list = account.OfferHistories
+                .Select(p => new OfferHistoryResponse(p, 1)).ToList().Reverse<OfferHistoryResponse>().ToList();
+            return list;
+        }
+        //get offerhistory/waiting 
+        [HttpGet("{id}/offerhistories/waiting")]
+        public ActionResult<List<OfferHistoryResponse>> GetFreelancerOfferHistoriesWaiting(int id)
         {
             var account = _context.Accounts
                 .Include(p => p.OfferHistories).ThenInclude(p => p.Job).ThenInclude(p=>p.Renter)
@@ -365,8 +394,9 @@ namespace Api.Controllers
             {
                 return BadRequest();
             }
-            return account.OfferHistories.Where(p=>p.Job.Status=="Waiting" && p.Job.Deadline>DateTime.Now)
-                .Select(p => new OfferHistoryResponse(p, 1)).ToList();
+            var list = account.OfferHistories.Where(p => p.Job.Status == "Waiting" && p.Job.Deadline > DateTime.Now)
+                .Select(p => new OfferHistoryResponse(p, 1)).ToList().Reverse<OfferHistoryResponse>().ToList();
+            return list;
         }            
 
     
@@ -529,6 +559,27 @@ namespace Api.Controllers
             return Ok();
         }        
 
+        [HttpPut("topup/{money}")]
+        public async Task<ActionResult> TopUp(int money)
+        {
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var account = await _context.Accounts.SingleOrDefaultAsync(p => p.Email == email);
+            if(account == null)
+            {
+                return BadRequest();
+            }
+            account.Balance += money;
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
         [HttpPut("{id}/onready")]
         public async Task<IActionResult> OnReady(int id)
         {

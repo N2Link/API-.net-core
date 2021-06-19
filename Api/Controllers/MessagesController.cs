@@ -46,13 +46,19 @@ namespace Api.Controllers
         public async Task<ActionResult<IEnumerable<MessageResponse>>> 
             GetMessage(int jobId, int freelancerId)
         {
-            return await _context.Messages.Where(p => p.JobId == jobId
+            return await _context.Messages
+                .Include(p=>p.Freelancer)
+                .Include(p=>p.Job)
+                .Include(p=>p.Sender)
+                .Include(p=>p.Receive)
+                .Where(p => p.JobId == jobId
             && p.FreelancerId == freelancerId)
             .OrderByDescending(p=>p.Time)
             .Take(20)
             .Select(p => new MessageResponse(p))
             .ToListAsync();
         }
+
         [HttpPut("seen")]
         public async Task<ActionResult> SeenMessage( int jobId, int freelancerId)
         {

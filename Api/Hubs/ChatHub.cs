@@ -22,6 +22,7 @@ namespace Api.Hubs
         {
             return base.OnConnectedAsync();
         }
+        //đăng ký thiết bị 
         public void Connect(int id)
         {
             if (ChatUsers.ContainsKey(id))
@@ -38,9 +39,11 @@ namespace Api.Hubs
                 vs.Add(Context.ConnectionId);
                 ChatUsers.Add(id, vs);
             }
+            Clients.Client(Context.ConnectionId).SendAsync("Connected"); // báo đã connect thành công
             Console.WriteLine("userid: "+ id.ToString() + "\tconnectid: " + Context.ConnectionId);
             
         }
+        //hủy kết nối thiết bị
         public void Disconnect(int id)
         {
             if (!ChatUsers.ContainsKey(id))
@@ -60,7 +63,7 @@ namespace Api.Hubs
                 return;
             }
         }
-
+        //Gửi tin nhắn
         public async Task SendMessage(int jobId, int freelancerId,
             int toUserId, string message)
         {
@@ -88,17 +91,27 @@ namespace Api.Hubs
             }
 
 
-            if (ChatUsers.ContainsKey(toUserId)&&ChatUsers.ContainsKey(fromUserId))
+            if (ChatUsers.ContainsKey(toUserId))
             {
                 foreach (var item in ChatUsers[toUserId])
                 {
                     await Clients.Client(item).SendAsync("ReceiveMessage", jobId, freelancerId,
-                        fromUserId, toUserId, message, msg.Time);
+                        fromUserId, toUserId, message, msg.Time);//gọi người nhận nhận tin nhắn
+                }  
+            }
+            if (ChatUsers.ContainsKey(fromUserId))
+            {
+                foreach (var item in ChatUsers[fromUserId])
+                {
+                    await Clients.Client(item).SendAsync("SendMessage_Successfully", jobId, freelancerId,
+                        fromUserId, toUserId, message, msg.Time);// thông báo người gửi đã gửi thành công tin nhắn 
                 }
             }
-            Console.WriteLine("SendMessage");
+
+
         }
 
+        //xem tin nhắn, gọi khi người dùng mở mục chat => chuyển tin nhắn chưa xem thành đã xem
         public async Task SeeMessage(int jobId, int freelancerId, int fromUserId)
         {
             var list = _context.Messages.Where(p => p.JobId == jobId && p.FreelancerId == freelancerId
@@ -124,6 +137,94 @@ namespace Api.Hubs
             }
         }
 
+        //Renter gửi đề nghị số tiền sẽ trả cho freelancer
+        public async Task PutMoney(int jobId, int freelancerId, int money)
+        {
+            var job = _context.Jobs.Find(jobId);
+            if (job == null||!(job.Status == "Waiting"&&job.Deadline<DateTime.Now))
+            {
+                return;
+            }
+            var freelancer = _context.Accounts.Find(freelancerId);
+            if(freelancer == null)
+            {
+                return;
+            }
+
+            if (ChatUsers.ContainsKey(freelancerId))
+            {
+                try
+                {
+                    //Chuyển lời đề nghị đến cho Freelancer
+                    foreach (var contextId in ChatUsers[freelancerId])
+                    {
+                        await Clients.Client(contextId).SendAsync("SuggestedPrice", jobId, freelancerId, money );
+                    }
+                }
+                catch {}
+            }
+            if (!ChatUsers.ContainsKey(job.RenterId))
+            {
+                return;
+            }
+            //Thông báo gửi đề nghị thành công
+            foreach (var contextId in ChatUsers[job.RenterId])
+            {
+                await Clients.Clients(contextId).SendAsync("PutMoney_Successfully", jobId, freelancerId);
+            }
+
+        }
+        //Freelancer xác nhận có đồng ý số tiền hay không
+        public async Task ConfirmSuggestedPrice(int jobId, int freelancerId, int money, bool confirm)
+        {
+            var job = _context.Jobs.Find(jobId);
+            if (job == null || !(job.Status == "Waiting" && job.Deadline < DateTime.Now))
+            {
+                return;
+            }
+            var freelancer = _context.Accounts.Find(freelancerId);
+            if (freelancer == null)
+            {
+                return;
+            }
+            var renter = _context.Accounts.Find(job.RenterId);
+            if (renter == null || renter.Balance < money)
+            {
+                return;
+            }
+            if (confirm)
+            {
+                job.Price += money;
+                job.Status = "In progress";
+                renter.Balance -= money;
+                await _context.SaveChangesAsync();
+            }
+
+            if (ChatUsers.ContainsKey(freelancerId))
+            {
+                try
+                {
+                    //thông báo đã xác nhận giá tiền cho freelancer confirm = yes/no
+                    foreach (var contextId in ChatUsers[freelancerId])
+                    {
+                        await Clients.Client(contextId).SendAsync("Confirm", jobId, freelancerId, confirm);
+                    }
+                }
+                catch { }
+            }
+
+            if (!ChatUsers.ContainsKey(job.RenterId))
+            {
+                return;
+            }
+            //thông báo đã xác nhận giá tiền cho renter confirm = yes/no
+            foreach (var contextId in ChatUsers[job.RenterId])
+            {
+                await Clients.Clients(contextId).SendAsync("Confirm", jobId, freelancerId, confirm);
+            }
+
+        }
+        //freelancer gửi yêu cầu kết thông công việc
         public async Task SendFinishRequest(int jobId)
         {
             var job = _context.Jobs.Find(jobId);
@@ -135,21 +236,27 @@ namespace Api.Hubs
 
             job.Status = "Request finish";
             await _context.SaveChangesAsync();
-            if (!ChatUsers.ContainsKey(job.RenterId))
+            if (ChatUsers.ContainsKey(job.RenterId))
+            {
+                //gửi đến renter yêu cầu kết thúc công việc của freelancer
+                foreach (var contextId in ChatUsers[job.RenterId])
+                {
+                    await Clients.Client(contextId).SendAsync("Requestfinish", jobId, freelancerId);
+                }
+            }
+
+            if (!ChatUsers.ContainsKey(freelancerId))
             {
                 return;
             }
-            foreach (var contextId in ChatUsers[job.RenterId])
-            {
-                await Clients.Client(contextId).SendAsync("Requestfinish", jobId, freelancerId);
-            }
-
-
+            // thông báo cho freelancer đã gửi yêu cầu kết thúc thành công
             foreach (var contextId in ChatUsers[freelancerId])
             {
                 await Clients.Client(contextId).SendAsync("SendFinishRequest_Successfully", jobId, freelancerId);
             }
         }
+
+        // renter gửi xác nhận kết thúc job 
         public async Task FinishJob(int jobId)
         {
             var job = _context.Jobs.Find(jobId);
@@ -157,24 +264,42 @@ namespace Api.Hubs
             {
                 return;
             }
-            job.Status = "Done";
+            job.Status = "Finish";
+            var freelancer = _context.Accounts.Find(job.FreelancerId);
+            freelancer.Balance += job.Price;
+
             await _context.SaveChangesAsync();
-            int freelancerId = Int32.Parse(job.FreelancerId.ToString());
+            int freelancerId = freelancer.Id;
             if (!ChatUsers.ContainsKey(freelancerId))
             {
                 return;
             }
 
-            foreach (var contextId in ChatUsers[freelancerId])
+            if (ChatUsers.ContainsKey(freelancerId))
             {
-                await Clients.Client(contextId).SendAsync("Done",jobId, freelancerId);
+                try
+                {
+                    // gửi xác nhận kết thúc job từ renter đến freelancer
+                    foreach (var contextId in ChatUsers[freelancerId])
+                    {
+                        await Clients.Client(contextId).SendAsync("Finish", jobId, freelancerId);
+                    }
+                }
+                catch { }
             }
 
+            if (!ChatUsers.ContainsKey(job.RenterId))
+            {
+                return;
+            }
+            // thông báo renter đã gửi xác nhận kết thúc job thành công
             foreach (var contextId in ChatUsers[job.RenterId])
             {
                 await Clients.Client(contextId).SendAsync("FinishJob_Successfully", jobId, freelancerId);
             }
-        }      
+        }
+
+        // renter gửi yêu cầu làm lại job 
         public async Task SendRequestRework(int jobId)
         {
             var job = _context.Jobs.Find(jobId);
@@ -190,17 +315,32 @@ namespace Api.Hubs
                 return;
             }
 
-            foreach (var contextId in ChatUsers[freelancerId])
+            if (ChatUsers.ContainsKey(freelancerId))
             {
-                await Clients.Client(contextId).SendAsync("RequestRework", jobId, freelancerId);
+                try
+                {
+                    // gửi yêu cầu làm lại job từ renter đến freelancer
+                    foreach (var contextId in ChatUsers[freelancerId])
+                    {
+                        await Clients.Client(contextId).SendAsync("RequestRework", jobId, freelancerId);
+                    }
+                }
+                catch { }
             }
 
+
+            if (!ChatUsers.ContainsKey(job.RenterId))
+            {
+                return;
+            }
+
+            // xác nhận renter gửi yêu cầu làm lại job thành công
             foreach (var contextId in ChatUsers[job.RenterId])
             {
                 await Clients.Client(contextId).SendAsync("SendRequestRework_Successfully", jobId, freelancerId);
             }
-        }       
-
+        }
+        // renter gửi yêu cầu hủy job
         public async Task SendRequestCancellation(int jobId)
         {
             var job = _context.Jobs.Find(jobId);
@@ -211,39 +351,74 @@ namespace Api.Hubs
             job.Status = "Request cancellation";
             await _context.SaveChangesAsync();
             int freelancerId = Int32.Parse(job.FreelancerId.ToString());
-            if (!ChatUsers.ContainsKey(freelancerId))
+
+            if (ChatUsers.ContainsKey(freelancerId))
+            {
+                try
+                {
+                    // gửi yêu cầu hủy job từ renter đến freelancer
+                    foreach (var contextId in ChatUsers[freelancerId])
+                    {
+                        await Clients.Client(contextId).SendAsync("RequestCancellation", jobId, freelancerId);
+                    }
+                }
+                catch {}
+            }
+
+            if (!ChatUsers.ContainsKey(job.RenterId))
             {
                 return;
             }
-
-            foreach (var contextId in ChatUsers[freelancerId])
-            {
-                await Clients.Client(contextId).SendAsync("RequestCancellation", jobId, freelancerId);
-            }
-
+            // xác nhận renter gửi yêu cầu hủy job thành công
             foreach (var contextId in ChatUsers[job.RenterId])
             {
                 await Clients.Client(contextId).SendAsync("SendRequestCancellation_Successfully", jobId, freelancerId);
             }
         }
 
-        public async Task SendConfirmRequest(int jobId, bool confirm)
+        // admin gửi quyết định cho các request
+        public async Task SendConfirmRequest(int jobId, string status, int adminId,string message)
         {
             var job = _context.Jobs.Find(jobId);
             if (job == null)
             {
                 return;
             }
+            var renter = _context.Accounts.Find(job.RenterId);
+
             int freelancerId = Int32.Parse(job.FreelancerId.ToString());
 
+            job.Status = status;
+            if(status == "Cancellation")
+            {
+                renter.Balance += job.Price;
+            }
+
+            Message msg = new Message()
+            {
+                JobId = job.Id,
+                FreelancerId = freelancerId,
+                Message1 = message,
+                SenderId = adminId,
+                ReceiveId = adminId,
+                Status = "Seen",
+                Time = DateTime.Now,
+            };//đây là message của admin cho quyết định của mình, load db check thấy senderId == receiveId 
+            //thì để nó là một dòng note trên màn hình
+
+            _context.Messages.Add(msg);
+            await _context.SaveChangesAsync();
+
+
+            //gửi  quyết định của admin đến user
             foreach (var contextId in ChatUsers[freelancerId])
             {
-                await Clients.Client(contextId).SendAsync("ConfirmRequest", jobId, freelancerId, confirm);
+                await Clients.Client(contextId).SendAsync("ConfirmRequest", jobId, freelancerId, status, message);
             }
 
             foreach (var contextId in ChatUsers[job.RenterId])
             {
-                await Clients.Client(contextId).SendAsync("ConfirmRequest", jobId, freelancerId, confirm);
+                await Clients.Client(contextId).SendAsync("ConfirmRequest", jobId, freelancerId, status, message);
             }
 
         }
