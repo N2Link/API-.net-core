@@ -423,8 +423,6 @@ namespace Api.Models
 
                 entity.Property(e => e.Confirmation).HasMaxLength(50);
 
-                entity.Property(e => e.Form).HasMaxLength(50);
-
                 entity.Property(e => e.FreelancerId).HasColumnName("FreelancerID");
 
                 entity.Property(e => e.JobId).HasColumnName("JobID");
@@ -443,6 +441,11 @@ namespace Api.Models
                     .HasMaxLength(20);
 
                 entity.Property(e => e.Time).HasColumnType("datetime");
+
+                entity.Property(e => e.Type)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasDefaultValueSql("('Text')");
 
                 entity.HasOne(d => d.Freelancer)
                     .WithMany(p => p.MessageFreelancers)

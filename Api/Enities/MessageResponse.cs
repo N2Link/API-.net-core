@@ -13,27 +13,25 @@ namespace Api.Enities
             this.Id = message.Id;
             this.Message1 = message.Message1;
             this.Status = message.Status;
-            this.Job = new ResponseIdName(message.Job);
-            this.Freelancer = new ResponseIdName(message.Freelancer);
-            this.Sender = new ResponseIdName(message.Sender);
-            this.Receiver = new ResponseIdName(message.Receive);
+            this.JobId = Int32.Parse(message.JobId.ToString());
+            this.FreelancerId = message.FreelancerId;
+            this.SenderId = message.SenderId;
+            this.ReceiveId = message.ReceiveId;
             this.Time = message.Time;
 
-            this.Form = message.Form;
+            this.Type = message.Type;
             this.Confirmation = message.Confirmation;
         }
+
         public int Id { get; set; }
-        public ResponseIdName Job { get; set; }
-        public ResponseIdName Freelancer { get; set; }
-        public ResponseIdName Sender { get; set; }
-        public ResponseIdName Receiver { get; set; }
-        public string AvatarUrl { get; set; }
+        public int JobId { get; set; }
+        public int SenderId { get; set; }
+        public int ReceiveId { get; set; }
         public string Message1 { get; set; }
         public string Status { get; set; }
-        public string Form { get; set; }
-        public string Confirmation { get; set; }
         public DateTime Time { get; set; }
-
-
+        public int FreelancerId { get; set; }
+        public string Type { get; set; }
+        public string Confirmation { get; set; }
     }
 }

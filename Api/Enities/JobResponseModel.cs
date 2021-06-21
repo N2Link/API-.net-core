@@ -33,7 +33,7 @@ namespace Api.Enities
             AvatarUrl = job.Renter ==null?null: job.Renter.AvatarUrl;
             BidCount = job.OfferHistories.Count();
             Offered = check;
-
+            Price = job.Price;
         } 
         public int Id { get; set; }
         public string Name { get; set; }
@@ -54,6 +54,7 @@ namespace Api.Enities
         public ProvinceResponse Province { get; set; }
         public string Status { get; set; }
         public int BidCount { get; set; }
+        public int Price { get; set; }
         public bool Offered { get; set; }
         public ICollection<ResponseIdName> Skills { get; set; }
     }

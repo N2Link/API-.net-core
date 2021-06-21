@@ -66,49 +66,101 @@ namespace Api.Controllers
                     ToUser = toUser,
                     LastSender = new ResponseIdName(last.Sender),
                     LastMessage = last.Message1,
-                    //LastMsgStatus = last.Status,
-                    Status = last.Status,
+                    LastMsgStatus = last.Status,
                     Time = last.Time,
                 };
+
+                if(last.Job.Status == "Waiting")
+                {
+                    messageUserResponse.Status = "In discussion";
+                }else if(last.Job.Status == "Cancellation" || last.Job.Status == "Closed" 
+                    || last.Job.FreelancerId != last.FreelancerId)
+                {
+                    messageUserResponse.Status = "Stop discussion";
+                }else if(last.Job.Status == "Finished")
+                {
+                    messageUserResponse.Status = "Finished";
+                }
+                else
+                {
+                    messageUserResponse.Status = "In progress";
+                }          
+                
                 list.Add(messageUserResponse);
             }
 
             return list.OrderByDescending(p=>p.Time).ToList();
         }
 
-        //[HttpGet("checkassign")]
-        //public async Task<ActionResult> CheckAssign(int jobId, int freelancerId)
-        //{
-        //    string jwt = Request.Headers["Authorization"];
-        //    jwt = jwt.Substring(7);
-        //    var handler = new JwtSecurityTokenHandler();
-        //    var jsonHandler = handler.ReadJwtToken(jwt);
-        //    var tokenS = jsonHandler as JwtSecurityToken;
-        //    var email = tokenS.Claims.SingleOrDefault(claim => claim.Type == "email").Value;
-        //    var account = await _context.Accounts
-        //        .Include(p=>p.JobRenters)
-        //        .SingleOrDefaultAsync(p => p.Email == email);
-        //    if(account== null)
-        //    {
-        //        return BadRequest();
-        //    }
+        [HttpGet("checkassign")]
+        public async Task<ActionResult> CheckAssign(int jobId, int freelancerId =0)
+        {
+            string jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            var handler = new JwtSecurityTokenHandler();
+            var jsonHandler = handler.ReadJwtToken(jwt);
+            var tokenS = jsonHandler as JwtSecurityToken;
+            var email = tokenS.Claims.SingleOrDefault(claim => claim.Type == "email").Value;
+            var account = await _context.Accounts
+                .Include(p => p.JobRenters)
+                .SingleOrDefaultAsync(p => p.Email == email);
+            if (account == null)
+            {
+                return BadRequest();
+            }
 
-        //    var job = account.JobRenters.SingleOrDefault(p => p.Id == jobId);
-        //    if(job == null)
-        //    {
-        //        return BadRequest();
-        //    }
+            var job = account.JobRenters.SingleOrDefault(p => p.Id == jobId);
+            if (job == null)
+            {
+                return BadRequest();
+            }
+            if (job.Status == "Waiting" )
+            {
+                if (freelancerId != 0)
+                {
+                    foreach (var item in _context.Messages.Where(p => p.JobId == jobId && p.FreelancerId == freelancerId).ToList())
+                    {
+                        if (item.Type == "SuggestedPrice" && item.Confirmation == null)
+                        {
+                            return Ok(new { canAssign = false, message = "Bạn đã gửi yêu cầu trước đó rồi, hãy chờ freelancer xác nhận" });
+                        }
+                    }
+                }
 
-        //    if(job.Status == "Waiting" && job.Deadline > TimeVN.Now())
-        //    {
-        //        return Ok(new { canAssign = true });
-        //    }
-        //    if(job.FreelancerId == freelancerId)
-        //    {
-        //        return Ok(new { canAssign = false });
-        //    }
+                return Ok(new { canAssign = true, message = "Bạn có thể giao việc này" });
+            }
+            return Ok(new { canAssign = false, message = "Bạn không thể giao việc này cho freelancer" });
+        }
 
-            
-        //}
+        [HttpGet("checkrequest")]
+        public async Task<ActionResult> CheckRequest(int jobId, int freelancerId)
+        {
+            string jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            var handler = new JwtSecurityTokenHandler();
+            var jsonHandler = handler.ReadJwtToken(jwt);
+            var tokenS = jsonHandler as JwtSecurityToken;
+            var email = tokenS.Claims.SingleOrDefault(claim => claim.Type == "email").Value;
+            var account = await _context.Accounts
+                .Include(p => p.JobRenters)
+                .SingleOrDefaultAsync(p => p.Email == email);
+            if (account == null)
+            {
+                return BadRequest();
+            }
+
+            var job = _context.Jobs.SingleOrDefault(p => p.Id == jobId);
+            if (job == null)
+            {
+                return BadRequest();
+            }
+            var check = _context.Messages.First(p => p.Type == "FinishRequest" && p.Confirmation == null);
+            if(check == null)
+            {
+                return Ok(new { canRequest = true, message = "Bạn có thể yêu cầu kết thúc công việc" });
+            }
+            return Ok(new { canRequest = false, message = "Bạn không không thể gửi thêm yêu cầu kết thúc công việc" });
+
+        }
     }
 }

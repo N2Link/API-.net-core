@@ -27,10 +27,6 @@ namespace Api.Enities
                     {
                         this.Status = "Waiting";
                     }
-                    else
-                    {
-                        this.Status = "Denied";
-                    }
                 }
                 else
                 {

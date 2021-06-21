@@ -15,8 +15,8 @@ namespace Api.Models
         public string Status { get; set; }
         public DateTime Time { get; set; }
         public int FreelancerId { get; set; }
-        public string Form { get; set; }
         public string Confirmation { get; set; }
+        public string Type { get; set; }
 
         public virtual Account Freelancer { get; set; }
         public virtual Job Job { get; set; }

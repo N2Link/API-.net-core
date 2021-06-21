@@ -176,7 +176,7 @@ namespace Api.Controllers
                 return NotFound();
             }
             var jobFreelancers = account.JobFreelancers
-                .Where(p=>p.Status == "Done" || p.Status =="Cancelled" )
+                .Where(p=>p.Status == "Finished" || p.Status =="Cancelled" )
                 .Select(p=> new JobForListResponse(p)).ToList();
             return jobFreelancers;
         }       
@@ -229,7 +229,7 @@ namespace Api.Controllers
                 return NotFound();
             }
             var JobRenters = account.JobRenters
-                .Where(p=>p.Deadline > TimeVN.Now() && p.Status =="Waiting")
+                .Where(p=> p.Status =="Waiting")
                 .Select(p=> new JobForListResponse(p)).ToList();
             return JobRenters;
         }    
@@ -281,8 +281,7 @@ namespace Api.Controllers
                 return NotFound();
             }
             var JobRenters = account.JobRenters
-                .Where(p => (p.Deadline < TimeVN.Now() && p.Status != "Waiting")
-                || p.Status == "Done" || p.Status == "Closed" || p.Status =="Cancelled")
+                .Where(p => p.Status == "Finished" || p.Status == "Closed" || p.Status =="Cancelled")
                 .Select(p=> new JobForListResponse(p)).ToList();
             return JobRenters;
         }
@@ -397,7 +396,7 @@ namespace Api.Controllers
             {
                 return BadRequest();
             }
-            var list = account.OfferHistories.Where(p => p.Job.Status == "Waiting" && p.Job.Deadline > TimeVN.Now())
+            var list = account.OfferHistories.Where(p => p.Job.Status == "Waiting" )
                 .Select(p => new OfferHistoryResponse(p, 1)).ToList().Reverse<OfferHistoryResponse>().ToList();
             return list;
         }            
