@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Api.Models;
+using Api.Service;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -29,23 +30,23 @@ namespace Api.Controllers
         [HttpGet]
         public String FormatDataDB()
         {
-            var name = "";
-            foreach (var item in _context.Accounts.ToList())
-            {
-                name = item.AvatarUrl.Substring(item.AvatarUrl.LastIndexOf("\\") + 1);
-                item.AvatarUrl = "freelancervn.somee.com/api/images/avatars/" + name;
-            }
-            foreach (var item in _context.CapacityProfiles.ToList())
-            {
-                name = item.ImageUrl.Substring(item.ImageUrl.LastIndexOf("\\") + 1);
-                item.ImageUrl = "freelancervn.somee.com/api/images/images/" + name;
-            }    
-            foreach (var item in _context.Specialties.ToList())
-            {
-                name = item.Image.Substring(item.Image.LastIndexOf("\\") + 1);
-                item.Image = "freelancervn.somee.com/api/images/assets/" + name;
-            }
-            _context.SaveChanges();
+            //var name = "";
+            //foreach (var item in _context.Accounts.ToList())
+            //{
+            //    name = item.AvatarUrl.Substring(item.AvatarUrl.LastIndexOf("\\") + 1);
+            //    item.AvatarUrl = "freelancervn.somee.com/api/images/avatars/" + name;
+            //}
+            //foreach (var item in _context.CapacityProfiles.ToList())
+            //{
+            //    name = item.ImageUrl.Substring(item.ImageUrl.LastIndexOf("\\") + 1);
+            //    item.ImageUrl = "freelancervn.somee.com/api/images/images/" + name;
+            //}    
+            //foreach (var item in _context.Specialties.ToList())
+            //{
+            //    name = item.Image.Substring(item.Image.LastIndexOf("\\") + 1);
+            //    item.Image = "freelancervn.somee.com/api/images/assets/" + name;
+            //}
+            //_context.SaveChanges();
             //foreach (var item in _context.Accounts.ToList())
             //{
             //    item.AvatarUrl = "\\Avatars\\" + item.AvatarUrl;
@@ -64,7 +65,7 @@ namespace Api.Controllers
             //}
             //_context.SaveChanges();
 
-            return "OK";
+            return TimeVN.Now().ToString();
         }
     }
 }

@@ -421,6 +421,10 @@ namespace Api.Models
 
                 entity.Property(e => e.Id).HasColumnName("ID");
 
+                entity.Property(e => e.Confirmation).HasMaxLength(50);
+
+                entity.Property(e => e.Form).HasMaxLength(50);
+
                 entity.Property(e => e.FreelancerId).HasColumnName("FreelancerID");
 
                 entity.Property(e => e.JobId).HasColumnName("JobID");

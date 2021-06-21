@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
 {
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     [EnableCors]
@@ -19,7 +18,7 @@ namespace Api.Controllers
         public Dictionary<int, List<string>> GetUserOnline()
         {
             return ChatHub.ChatUsers;
-        }
+        }     
 
         [HttpDelete("id")]
         public IActionResult DeleteUser(int id)

@@ -1,4 +1,5 @@
 ﻿using Api.Models;
+using Api.Service;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,7 +23,7 @@ namespace Api.Enities
 
                 if (Job.Freelancer == null)
                 {
-                    if(Job.Deadline > DateTime.Now)
+                    if(Job.Deadline > TimeVN.Now())
                     {
                         this.Status = "Waiting";
                     }

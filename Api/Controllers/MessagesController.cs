@@ -58,37 +58,36 @@ namespace Api.Controllers
             .Select(p => new MessageResponse(p))
             .ToListAsync();
         }
+        //[HttpPut("seen")]
+        //public async Task<ActionResult> SeenMessage( int jobId, int freelancerId)
+        //{
+        //    String jwt = Request.Headers["Authorization"];
+        //    jwt = jwt.Substring(7);
+        //    //Decode jwt and get payload
+        //    var stream = jwt;
+        //    var handler = new JwtSecurityTokenHandler();
+        //    var jsonToken = handler.ReadToken(stream);
+        //    var tokenS = jsonToken as JwtSecurityToken;
+        //    //I can get Claims using:
+        //    var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+        //    var account = await _context.Accounts.Include(p=>p.JobRenters)
+        //        .SingleOrDefaultAsync(p => p.Email == email);
+        //    if(account.Id!=freelancerId
+        //        &&(account.JobRenters.Count == 0|| !account.JobRenters
+        //        .Select(p => p.Id).Contains(jobId)))
+        //    {
+        //        return BadRequest();
+        //    }
 
-        [HttpPut("seen")]
-        public async Task<ActionResult> SeenMessage( int jobId, int freelancerId)
-        {
-            String jwt = Request.Headers["Authorization"];
-            jwt = jwt.Substring(7);
-            //Decode jwt and get payload
-            var stream = jwt;
-            var handler = new JwtSecurityTokenHandler();
-            var jsonToken = handler.ReadToken(stream);
-            var tokenS = jsonToken as JwtSecurityToken;
-            //I can get Claims using:
-            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
-            var account = await _context.Accounts.Include(p=>p.JobRenters)
-                .SingleOrDefaultAsync(p => p.Email == email);
-            if(account.Id!=freelancerId
-                &&(account.JobRenters.Count == 0|| !account.JobRenters
-                .Select(p => p.Id).Contains(jobId)))
-            {
-                return BadRequest();
-            }
-
-            foreach (var msg in _context.Messages.Where(p=>p.JobId == jobId 
-            && p.FreelancerId ==freelancerId && p.Status == "Unseen"
-            && p.ReceiveId == account.Id).ToList())
-            {
-                msg.Status = "Seen";
-            }
-            await _context.SaveChangesAsync();
-            return Ok();
-        }
+        //    foreach (var msg in _context.Messages.Where(p=>p.JobId == jobId 
+        //    && p.FreelancerId ==freelancerId && p.Status == "Unseen"
+        //    && p.ReceiveId == account.Id).ToList())
+        //    {
+        //        msg.Status = "Seen";
+        //    }
+        //    await _context.SaveChangesAsync();
+        //    return Ok();
+        //}
         private bool MessageExists(int id)
         {
             return _context.Messages.Any(e => e.Id == id);

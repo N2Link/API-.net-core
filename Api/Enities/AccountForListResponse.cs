@@ -16,12 +16,12 @@ namespace Api.Enities
             AvatarUrl = account.AvatarUrl;
             try
             {
-                Level = account.LevelId == null ? null : new ResponseIdName(account.Level);
+                Level = account.Level == null ? null : new ResponseIdName(account.Level);
             }
             catch (Exception){}
             try
             {
-                 Specialty = account.SpecialtyId == null ? null
+                 Specialty = account.Specialty == null ? null
                         : new ResponseIdName(account.Specialty);
             }
             catch (Exception){}

@@ -105,6 +105,7 @@ namespace Api
                 };
             }); 
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<ITimeVN, TimeVN>();
 
 
         }

@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Api.Enities;
 using Api.Helpers;
 using Microsoft.AspNetCore.Cors;
+using Api.Service;
 
 namespace Api.Controllers
 {
@@ -51,7 +52,7 @@ namespace Api.Controllers
                     .Include(p => p.S).ThenInclude(p => p.Specialty).AsSplitQuery()
                 .OrderByDescending(p => p.CreateAt)
                 .Where(p=>p.RenterId!= account.Id && p.Status == "Waiting" 
-                && p.Deadline > DateTime.Now)
+                && p.Deadline > TimeVN.Now())
                 .Select(p => new JobForListResponse(p)).ToListAsync();
         }
 
@@ -85,7 +86,7 @@ namespace Api.Controllers
                 &&(provinceId == "00" || p.ProvinceId == provinceId)
                 && (formOfWorkId == 0|| p.FormId == formOfWorkId)
                 &&(typeOfWorkId== 0 || p.TypeId == typeOfWorkId)
-                &&p.Status=="Waiting"&&p.Deadline<= DateTime.Now)
+                &&p.Status=="Waiting"&&p.Deadline<= TimeVN.Now())
                 .OrderByDescending(p=>p.CreateAt)
                 .Select(p=> new JobForListResponse(p))
                 .ToListAsync();
@@ -158,7 +159,7 @@ namespace Api.Controllers
                 .Include(p => p.Payform)
                 .Include(p => p.JobSkills).ThenInclude(p => p.Skill)
                 .Include(p => p.Province)
-                .Where(p=>p.Deadline>DateTime.Now)
+                .Where(p=>p.Deadline>TimeVN.Now())
                 .ToListAsync();
             try
             {
@@ -255,7 +256,7 @@ namespace Api.Controllers
         //    {
         //        return BadRequest();
         //    }
-        //    if (jobEditModel.Deadline <= DateTime.Now)
+        //    if (jobEditModel.Deadline <= TimeVN.Now())
         //    {
         //        return BadRequest(new { message = "DateTime Invalid" });
         //    }
@@ -368,7 +369,7 @@ namespace Api.Controllers
                 .SingleOrDefaultAsync(p => p.Id == id);
 
             if (job == null) { NotFound(); }
-            if(!(job.Status != "Waiting" && job.Deadline > DateTime.Now))
+            if(!(job.Status != "Waiting" && job.Deadline > TimeVN.Now()))
             {
                 return BadRequest(new { message = "This job is not during in waiting for bid status" });
             }
@@ -780,7 +781,7 @@ namespace Api.Controllers
                 SpecialtyId = jobPostModel.SpecialtyId,
                 ProvinceId = jobPostModel.ProvinceId,
                 ServiceId = jobPostModel.ServiceId,
-                CreateAt = DateTime.Now,
+                CreateAt = TimeVN.Now(),
                 Status = "Waiting",
             };
             _context.Jobs.Add(job);

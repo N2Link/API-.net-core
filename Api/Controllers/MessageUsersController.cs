@@ -8,6 +8,7 @@ using Api.Models;
 using Api.Enities;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.EntityFrameworkCore;
+using Api.Service;
 
 namespace Api.Controllers
 {
@@ -54,7 +55,6 @@ namespace Api.Controllers
             {
                 var last = listMessage.Where(p => p.JobId == item.JobId
                 && p.FreelancerId == item.FreelancerId).Last();
-
                 AccountForListResponse toUser = account.Id == last.FreelancerId
                                     ? new AccountForListResponse(last.Job.Renter)
                                     : new AccountForListResponse(last.Freelancer);
@@ -66,13 +66,49 @@ namespace Api.Controllers
                     ToUser = toUser,
                     LastSender = new ResponseIdName(last.Sender),
                     LastMessage = last.Message1,
+                    //LastMsgStatus = last.Status,
                     Status = last.Status,
                     Time = last.Time,
                 };
                 list.Add(messageUserResponse);
             }
 
-            return list;
+            return list.OrderByDescending(p=>p.Time).ToList();
         }
+
+        //[HttpGet("checkassign")]
+        //public async Task<ActionResult> CheckAssign(int jobId, int freelancerId)
+        //{
+        //    string jwt = Request.Headers["Authorization"];
+        //    jwt = jwt.Substring(7);
+        //    var handler = new JwtSecurityTokenHandler();
+        //    var jsonHandler = handler.ReadJwtToken(jwt);
+        //    var tokenS = jsonHandler as JwtSecurityToken;
+        //    var email = tokenS.Claims.SingleOrDefault(claim => claim.Type == "email").Value;
+        //    var account = await _context.Accounts
+        //        .Include(p=>p.JobRenters)
+        //        .SingleOrDefaultAsync(p => p.Email == email);
+        //    if(account== null)
+        //    {
+        //        return BadRequest();
+        //    }
+
+        //    var job = account.JobRenters.SingleOrDefault(p => p.Id == jobId);
+        //    if(job == null)
+        //    {
+        //        return BadRequest();
+        //    }
+
+        //    if(job.Status == "Waiting" && job.Deadline > TimeVN.Now())
+        //    {
+        //        return Ok(new { canAssign = true });
+        //    }
+        //    if(job.FreelancerId == freelancerId)
+        //    {
+        //        return Ok(new { canAssign = false });
+        //    }
+
+            
+        //}
     }
 }

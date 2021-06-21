@@ -13,6 +13,7 @@ namespace Api.Enities
         public ResponseIdName LastSender { get; set; }
         public string LastMessage { get; set; }
         public DateTime Time { get; set; }
+        //public string LastMsgStatus { get; set; }
         public string Status { get; set; }
     }
 }

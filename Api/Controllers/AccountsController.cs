@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Api.Enities;
 using Api.Helpers;
 using Microsoft.AspNetCore.Cors;
+using Api.Service;
 
 namespace Api.Controllers
 {
@@ -137,6 +138,7 @@ namespace Api.Controllers
             var account = await _context.Accounts
                 .Include(p=>p.JobFreelancers).ThenInclude(p=>p.Renter)
                 .Include(p => p.JobFreelancers).ThenInclude(p => p.OfferHistories)
+                .Include(p => p.JobFreelancers).ThenInclude(p => p.S).ThenInclude(p=>p.Specialty).AsSplitQuery()
                 .SingleOrDefaultAsync(p => p.Id == id && p.Email == email);
             if (account == null)
             {
@@ -147,6 +149,7 @@ namespace Api.Controllers
                 || p.Status == "Request rework"
                 || p.Status == "Request cancellation")
                 .Select(p=> new JobForListResponse(p)).ToList();
+
             return jobFreelancers;
         }      
 
@@ -226,7 +229,7 @@ namespace Api.Controllers
                 return NotFound();
             }
             var JobRenters = account.JobRenters
-                .Where(p=>p.Deadline > DateTime.Now && p.Status =="Waiting")
+                .Where(p=>p.Deadline > TimeVN.Now() && p.Status =="Waiting")
                 .Select(p=> new JobForListResponse(p)).ToList();
             return JobRenters;
         }    
@@ -252,7 +255,7 @@ namespace Api.Controllers
                 return NotFound();
             }
             var JobRenters = account.JobRenters
-                .Where(p=>p.Deadline<=DateTime.Now && p.Status =="In progress")
+                .Where(p=>p.Status =="In progress")
                 .Select(p=> new JobForListResponse(p)).ToList();
             return JobRenters;
         }    
@@ -278,7 +281,7 @@ namespace Api.Controllers
                 return NotFound();
             }
             var JobRenters = account.JobRenters
-                .Where(p => (p.Deadline < DateTime.Now && p.Status != "Waiting")
+                .Where(p => (p.Deadline < TimeVN.Now() && p.Status != "Waiting")
                 || p.Status == "Done" || p.Status == "Closed" || p.Status =="Cancelled")
                 .Select(p=> new JobForListResponse(p)).ToList();
             return JobRenters;
@@ -394,7 +397,7 @@ namespace Api.Controllers
             {
                 return BadRequest();
             }
-            var list = account.OfferHistories.Where(p => p.Job.Status == "Waiting" && p.Job.Deadline > DateTime.Now)
+            var list = account.OfferHistories.Where(p => p.Job.Status == "Waiting" && p.Job.Deadline > TimeVN.Now())
                 .Select(p => new OfferHistoryResponse(p, 1)).ToList().Reverse<OfferHistoryResponse>().ToList();
             return list;
         }            
@@ -559,7 +562,7 @@ namespace Api.Controllers
             return Ok();
         }        
 
-        [HttpPut("topup/{money}")]
+        [HttpPut("deposit/{money}")]
         public async Task<ActionResult> TopUp(int money)
         {
             String jwt = Request.Headers["Authorization"];
@@ -642,7 +645,7 @@ namespace Api.Controllers
             {
                 return NotFound();
             }
-            account.BannedAtDate = DateTime.Now;
+            account.BannedAtDate = TimeVN.Now();
             //_context.Accounts.Remove(account);
             await _context.SaveChangesAsync();
             return account;
