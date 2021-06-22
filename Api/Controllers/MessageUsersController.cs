@@ -39,8 +39,8 @@ namespace Api.Controllers
             if (account == null) { return NotFound(); }
 
             var listMessage = _context.Messages
-                .Include(p=>p.Sender).AsSplitQuery()
-                .Include(p => p.Freelancer).AsSplitQuery()
+                .Include(p=>p.Sender)
+                .Include(p => p.Freelancer)
                 .Include(p=>p.Job).ThenInclude(p=>p.Renter).AsSplitQuery().ToList();
 
             var listDistinct = _context.Messages.Include(p => p.Job)
@@ -58,6 +58,8 @@ namespace Api.Controllers
                 AccountForListResponse toUser = account.Id == last.FreelancerId
                                     ? new AccountForListResponse(last.Job.Renter)
                                     : new AccountForListResponse(last.Freelancer);
+                int count = listMessage.Where(p => p.JobId == item.JobId
+                && p.FreelancerId == p.FreelancerId && p.Status == "Unseen").Count();
 
                 MessageUserResponse messageUserResponse = new MessageUserResponse()
                 {
@@ -68,6 +70,7 @@ namespace Api.Controllers
                     LastMessage = last.Message1,
                     LastMsgStatus = last.Status,
                     Time = last.Time,
+                    UnseenCount = count,
                 };
 
                 if(last.Job.Status == "Waiting")
@@ -93,7 +96,7 @@ namespace Api.Controllers
         }
 
         [HttpGet("checkassign")]
-        public async Task<ActionResult> CheckAssign(int jobId, int freelancerId =0)
+        public async Task<ActionResult> CheckAssign(int jobId, int freelancerId )
         {
             string jwt = Request.Headers["Authorization"];
             jwt = jwt.Substring(7);
@@ -116,17 +119,13 @@ namespace Api.Controllers
             }
             if (job.Status == "Waiting" )
             {
-                if (freelancerId != 0)
+                foreach (var item in _context.Messages.Where(p => p.JobId == jobId && p.FreelancerId == freelancerId).ToList())
                 {
-                    foreach (var item in _context.Messages.Where(p => p.JobId == jobId && p.FreelancerId == freelancerId).ToList())
+                    if (item.Type == "SuggestedPrice" && item.Confirmation == null)
                     {
-                        if (item.Type == "SuggestedPrice" && item.Confirmation == null)
-                        {
-                            return Ok(new { canAssign = false, message = "Bạn đã gửi yêu cầu trước đó rồi, hãy chờ freelancer xác nhận" });
-                        }
+                        return Ok(new { canAssign = false, message = "Bạn đã gửi yêu cầu trước đó rồi, hãy chờ freelancer xác nhận" });
                     }
                 }
-
                 return Ok(new { canAssign = true, message = "Bạn có thể giao việc này" });
             }
             return Ok(new { canAssign = false, message = "Bạn không thể giao việc này cho freelancer" });
@@ -154,7 +153,8 @@ namespace Api.Controllers
             {
                 return BadRequest();
             }
-            var check = _context.Messages.First(p => p.Type == "FinishRequest" && p.Confirmation == null);
+            var check = _context.Messages.First(p => p.JobId == jobId && p.FreelancerId == freelancerId 
+                                         && p.Type == "FinishRequest" && p.Confirmation == null);
             if(check == null)
             {
                 return Ok(new { canRequest = true, message = "Bạn có thể yêu cầu kết thúc công việc" });

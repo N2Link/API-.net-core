@@ -34,11 +34,26 @@ namespace Api.Enities
             BidCount = job.OfferHistories.Count();
             Offered = check;
             Price = job.Price;
+            if(job.RatingId != null)
+            {
+                Rating = new RatingResponse()
+                {
+                    Id = Int32.Parse(job.RatingId.ToString()),
+                    Freelancer = new ResponseIdName(job.Freelancer),
+                    Renter = new ResponseIdName(job.Renter),
+                    Comment = job.Rating.Comment,
+                    Star = job.Rating.Star,
+                };
+            }
+            StartAt = job.StartAt;
+            FinishAt = job.FinishAt;
         } 
         public int Id { get; set; }
         public string Name { get; set; }
         public DateTime Deadline { get; set; }
         public DateTime CreateAt { get; set; }
+        public DateTime? StartAt { get; set; }
+        public DateTime? FinishAt { get; set; }
 
         public string Details { get; set; }
         public string AvatarUrl { get; set; }
@@ -57,5 +72,6 @@ namespace Api.Enities
         public int Price { get; set; }
         public bool Offered { get; set; }
         public ICollection<ResponseIdName> Skills { get; set; }
+        public RatingResponse Rating { get; set; }
     }
 }

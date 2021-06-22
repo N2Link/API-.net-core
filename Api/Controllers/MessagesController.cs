@@ -34,8 +34,8 @@ namespace Api.Controllers
             var lastMessage = _context.Messages.Find(id);
 
             return await _context.Messages.Where(p => p.JobId == jobId
-            && p.FreelancerId == freelancerId && p.Time<lastMessage.Time
-            && p.Id != lastMessage.Id)
+            && p.FreelancerId == freelancerId && p.Time<lastMessage.Time && p.Id != lastMessage.Id
+            && ((p.Status == "Notification" && p.ReceiveId == freelancerId) || (p.Status != "Notification")))
             .OrderByDescending(p=>p.Time)
             .Take(20)
             .Select(p => new MessageResponse(p))
@@ -48,7 +48,8 @@ namespace Api.Controllers
         {
             return await _context.Messages
                 .Where(p => p.JobId == jobId
-            && p.FreelancerId == freelancerId)
+            && p.FreelancerId == freelancerId 
+            &&((p.Status == "Notification" && p.ReceiveId == freelancerId)||(p.Status != "Notification")))
             .OrderByDescending(p=>p.Time)
             .Take(20)
             .Select(p => new MessageResponse(p))

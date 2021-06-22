@@ -315,6 +315,8 @@ namespace Api.Models
                     .IsRequired()
                     .HasMaxLength(500);
 
+                entity.Property(e => e.FinishAt).HasColumnType("datetime");
+
                 entity.Property(e => e.FormId).HasColumnName("FormID");
 
                 entity.Property(e => e.FreelancerId).HasColumnName("FreelancerID");
@@ -330,11 +332,15 @@ namespace Api.Models
                     .IsUnicode(false)
                     .HasColumnName("ProvinceID");
 
+                entity.Property(e => e.RatingId).HasColumnName("RatingID");
+
                 entity.Property(e => e.RenterId).HasColumnName("RenterID");
 
                 entity.Property(e => e.ServiceId).HasColumnName("ServiceID");
 
                 entity.Property(e => e.SpecialtyId).HasColumnName("SpecialtyID");
+
+                entity.Property(e => e.StartAt).HasColumnType("datetime");
 
                 entity.Property(e => e.Status).HasMaxLength(50);
 
@@ -361,6 +367,11 @@ namespace Api.Models
                     .WithMany(p => p.Jobs)
                     .HasForeignKey(d => d.ProvinceId)
                     .HasConstraintName("FK_Job_Province");
+
+                entity.HasOne(d => d.Rating)
+                    .WithMany(p => p.Jobs)
+                    .HasForeignKey(d => d.RatingId)
+                    .HasConstraintName("FK__Job__RatingID__6ABAD62E");
 
                 entity.HasOne(d => d.Renter)
                     .WithMany(p => p.JobRenters)
@@ -561,15 +572,11 @@ namespace Api.Models
             {
                 entity.ToTable("Rating");
 
-                entity.Property(e => e.Id)
-                    .ValueGeneratedNever()
-                    .HasColumnName("ID");
+                entity.Property(e => e.Id).HasColumnName("ID");
 
                 entity.Property(e => e.Comment).HasMaxLength(500);
 
                 entity.Property(e => e.FreelancerId).HasColumnName("FreelancerID");
-
-                entity.Property(e => e.JobId).HasColumnName("JobID");
 
                 entity.Property(e => e.RenterId).HasColumnName("RenterID");
 
@@ -578,12 +585,6 @@ namespace Api.Models
                     .HasForeignKey(d => d.FreelancerId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Rating_User");
-
-                entity.HasOne(d => d.Job)
-                    .WithMany(p => p.Ratings)
-                    .HasForeignKey(d => d.JobId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Rating_Job");
 
                 entity.HasOne(d => d.Renter)
                     .WithMany(p => p.RatingRenters)

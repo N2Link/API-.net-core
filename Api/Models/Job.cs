@@ -12,7 +12,6 @@ namespace Api.Models
             JobSkills = new HashSet<JobSkill>();
             Messages = new HashSet<Message>();
             OfferHistories = new HashSet<OfferHistory>();
-            Ratings = new HashSet<Rating>();
         }
 
         public int Id { get; set; }
@@ -33,17 +32,20 @@ namespace Api.Models
         public string ProvinceId { get; set; }
         public string Status { get; set; }
         public int Price { get; set; }
+        public DateTime? StartAt { get; set; }
+        public DateTime? FinishAt { get; set; }
+        public int? RatingId { get; set; }
 
         public virtual FormOfWork Form { get; set; }
         public virtual Account Freelancer { get; set; }
         public virtual Payform Payform { get; set; }
         public virtual Province Province { get; set; }
+        public virtual Rating Rating { get; set; }
         public virtual Account Renter { get; set; }
         public virtual SpecialtyService S { get; set; }
         public virtual TypeOfWork Type { get; set; }
         public virtual ICollection<JobSkill> JobSkills { get; set; }
         public virtual ICollection<Message> Messages { get; set; }
         public virtual ICollection<OfferHistory> OfferHistories { get; set; }
-        public virtual ICollection<Rating> Ratings { get; set; }
     }
 }

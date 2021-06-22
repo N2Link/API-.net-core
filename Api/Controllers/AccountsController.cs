@@ -176,7 +176,7 @@ namespace Api.Controllers
                 return NotFound();
             }
             var jobFreelancers = account.JobFreelancers
-                .Where(p=>p.Status == "Finished" || p.Status =="Cancelled" )
+                .Where(p=>p.Status == "Finished" || p.Status =="Cancellation" )
                 .Select(p=> new JobForListResponse(p)).ToList();
             return jobFreelancers;
         }       
@@ -281,7 +281,7 @@ namespace Api.Controllers
                 return NotFound();
             }
             var JobRenters = account.JobRenters
-                .Where(p => p.Status == "Finished" || p.Status == "Closed" || p.Status =="Cancelled")
+                .Where(p => p.Status == "Finished" || p.Status == "Closed" || p.Status =="Cancellation")
                 .Select(p=> new JobForListResponse(p)).ToList();
             return JobRenters;
         }
@@ -301,8 +301,9 @@ namespace Api.Controllers
 
             var account = await _context.Accounts
                 .Include(p=>p.RatingFreelancers).ThenInclude(p=>p.Renter)
-                .Include(p=>p.RatingFreelancers).ThenInclude(p=>p.Job)
-                .SingleOrDefaultAsync(p => p.Email == email && p.Id ==id);
+                .Include(p=>p.RatingFreelancers).ThenInclude(p=>p.Jobs)
+                .SingleOrDefaultAsync(p => p.Email == email);
+
             if (account == null) { return NotFound(); }
             return account.RatingFreelancers
                 .Select(p => new RatingResponse(p)).ToList();

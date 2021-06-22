@@ -11,6 +11,7 @@ using Api.Enities;
 using Api.Helpers;
 using Microsoft.AspNetCore.Cors;
 using Api.Service;
+using Api.Hubs;
 
 namespace Api.Controllers
 {
@@ -28,10 +29,6 @@ namespace Api.Controllers
             _context = context;
         }
 
-
-
-
-
         [HttpGet]
         public async Task<ActionResult<IEnumerable<JobForListResponse>>> getJobs()
         {
@@ -46,13 +43,6 @@ namespace Api.Controllers
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             var account = await _context.Accounts.SingleOrDefaultAsync(p => p.Email == email);
             if (account == null) { return BadRequest(); }
-            if(account.RoleId == 1)
-            {
-                return await _context.Jobs.Include(p => p.Renter).Include(p=>p.OfferHistories)
-                    .Include(p=>p.S).ThenInclude(p=>p.Specialty).AsSplitQuery()
-                .OrderByDescending(p => p.CreateAt)
-                .Select(p => new JobForListResponse(p)).ToListAsync();
-            }
             return await _context.Jobs.Include(p => p.Renter).Include(p=>p.OfferHistories)
                     .Include(p => p.S).ThenInclude(p => p.Specialty).AsSplitQuery()
                 .OrderByDescending(p => p.CreateAt)
@@ -60,31 +50,7 @@ namespace Api.Controllers
                 && p.Deadline > TimeVN.Now())
                 .Select(p => new JobForListResponse(p)).ToListAsync();
         }   
-        //get job request
-        [HttpGet("admin/jobrequest")]
-        public async Task<ActionResult<IEnumerable<JobForListResponse>>> getJobsRequest()
-        {
-            String jwt = Request.Headers["Authorization"];
-            jwt = jwt.Substring(7);
-            //Decode jwt and get payload
-            var stream = jwt;
-            var handler = new JwtSecurityTokenHandler();
-            var jsonToken = handler.ReadToken(stream);
-            var tokenS = jsonToken as JwtSecurityToken;
-            //I can get Claims using:
-            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
-            var account = await _context.Accounts.SingleOrDefaultAsync(p => p.Email == email);
-            if (account == null) { return BadRequest(); }
-            if(account.RoleId != 1)
-            {
-                return BadRequest();
-            }
-            return await _context.Jobs.Include(p => p.Renter).Include(p => p.OfferHistories)
-                                 .Include(p => p.S).ThenInclude(p => p.Specialty).AsSplitQuery()
-                                 .Where(p=>p.Status == "Request rework" || p.Status == "Request cancellation")
-                                .OrderByDescending(p => p.CreateAt)
-                                .Select(p => new JobForListResponse(p)).ToListAsync();
-        }
+
 
 
         [HttpGet("search")]
@@ -211,6 +177,7 @@ namespace Api.Controllers
                 .Include(p => p.JobSkills).ThenInclude(p => p.Skill).AsSplitQuery()
                 .Include(p => p.Province).AsSplitQuery()
                 .Include(p => p.OfferHistories).AsSplitQuery()
+                .Include(p => p.Rating).AsSplitQuery()
                 .SingleOrDefaultAsync(p=>p.Id == id);
 
             if (job == null)
@@ -370,12 +337,13 @@ namespace Api.Controllers
                 return BadRequest();
             }
 
-            job.Status = "In progress";
             if (!job.OfferHistories.Select(p => p.FreelancerId).Contains(freelancerid))
             {
                 return BadRequest(new {message = "Freelancer didn't offer this job" });
-            }
+            }  
+            job.Status = "In progress";
             job.FreelancerId = freelancerid;
+            job.StartAt = TimeVN.Now();
             _context.Entry(job).State = EntityState.Modified;
             try
             {
@@ -532,7 +500,7 @@ namespace Api.Controllers
             return Ok();
         }    
         //put done
-        [HttpPut("{id}/done")]
+        [HttpPut("{id}/finished")]
         public async Task<ActionResult> DoneJob(int id)
         {
             var job = _context.Jobs.Find(id);
@@ -561,6 +529,7 @@ namespace Api.Controllers
                 return BadRequest();
             }
             job.Status = "Finished";
+            job.FinishAt = TimeVN.Now();
             _context.Entry(job).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return Ok();
@@ -683,6 +652,7 @@ namespace Api.Controllers
                 return BadRequest();
             }
             job.Status = "In progress";
+
             _context.Entry(job).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return Ok();
@@ -717,7 +687,8 @@ namespace Api.Controllers
             {
                 return BadRequest();
             }
-            job.Status = "Cancelled";
+            job.Status = "Cancellation";
+            job.FinishAt = TimeVN.Now();
             _context.Entry(job).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return Ok();

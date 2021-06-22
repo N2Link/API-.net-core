@@ -94,7 +94,6 @@ namespace Api.Controllers
                 return BadRequest();
             }
 
-            rating.JobId = rating.JobId;
             rating.RenterId =renter.Id;
             rating.FreelancerId = ratingPost.FreelancerId;
             rating.Star = rating.Star;
@@ -120,21 +119,21 @@ namespace Api.Controllers
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
 
-            var renter = await _context.Accounts
+            var renter = await _context.Accounts.Include(p=>p.JobRenters)
                 .SingleOrDefaultAsync(p => p.Email == email);
             if (renter == null)
             {
                 return BadRequest();
             }
+
             var job = renter.JobRenters.SingleOrDefault(p => p.Id == ratingPost.JobID);
 
-            if(job == null)
+            if(job == null || !(job.Status == "Finished" || job.Status == "Cancellation"))
             {
                 return BadRequest();
             }
             Rating rating = new Rating()
             {
-                JobId = ratingPost.JobID,
                 RenterId = renter.Id,
                 FreelancerId = ratingPost.FreelancerId,
                 Star = ratingPost.Star,
@@ -142,7 +141,9 @@ namespace Api.Controllers
             };
             _context.Ratings.Add(rating);
             await _context.SaveChangesAsync();
-            return Ok(rating);
+            job.RatingId = rating.Id;
+            await _context.SaveChangesAsync();
+            return Ok();
         }
 
         // DELETE: api/Ratings/5

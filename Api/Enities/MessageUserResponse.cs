@@ -15,5 +15,6 @@ namespace Api.Enities
         public DateTime Time { get; set; }
         public string LastMsgStatus { get; set; }
         public string Status { get; set; }
+        public int UnseenCount { get; set; }
     }
 }
