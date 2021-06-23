@@ -622,77 +622,7 @@ namespace Api.Controllers
             }
             return Ok();
         }
-        //put rework .. admin
-        [HttpPut("adminmode/{id}/rework")]
-        public async Task<ActionResult> Reworkjob(int id)
-        {
-            var job = _context.Jobs.Find(id);
-            if (job == null)
-            {
-                return NotFound();
-            }
-            String jwt = Request.Headers["Authorization"];
-            jwt = jwt.Substring(7);
-            //Decode jwt and get payload
-            var stream = jwt;
-            var handler = new JwtSecurityTokenHandler();
-            var jsonToken = handler.ReadToken(stream);
-            var tokenS = jsonToken as JwtSecurityToken;
-            //I can get Claims using:
-            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
-
-            var renter = await _context.Accounts
-                .SingleOrDefaultAsync(p => p.Email == email);
-            if (job.RenterId != renter.Id)
-            {
-                return BadRequest(new { message = "You dont have this permission" });
-            }
-            if (job.Status != "Request rework")
-            {
-                return BadRequest();
-            }
-            job.Status = "In progress";
-
-            _context.Entry(job).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-            return Ok();
-        }
-
-        //put cancel .. admin
-        [HttpPut("adminmode/{id}/cancel")]
-        public async Task<ActionResult> CancelJob(int id)
-        {
-            var job = _context.Jobs.Find(id);
-            if(job == null)
-            {
-                return NotFound();
-            }
-            String jwt = Request.Headers["Authorization"];
-            jwt = jwt.Substring(7);
-            //Decode jwt and get payload
-            var stream = jwt;
-            var handler = new JwtSecurityTokenHandler();
-            var jsonToken = handler.ReadToken(stream);
-            var tokenS = jsonToken as JwtSecurityToken;
-            //I can get Claims using:
-            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
-
-            var renter = await _context.Accounts
-                .SingleOrDefaultAsync(p => p.Email == email);
-            if(job.RenterId!= renter.Id)
-            {
-                return BadRequest(new { message = "You dont have this permission" });
-            }
-            if(job.Status != "Request cancellation")
-            {
-                return BadRequest();
-            }
-            job.Status = "Cancellation";
-            job.FinishAt = TimeVN.Now();
-            _context.Entry(job).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-            return Ok();
-        }
+       
 
         // POST: api/Jobs
         // To protect from overposting attacks, enable the specific properties you want to bind to, for

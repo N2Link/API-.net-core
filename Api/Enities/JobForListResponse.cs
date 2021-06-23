@@ -24,6 +24,7 @@ namespace Api.Enities
             Renter = job.Renter==null?null : new ResponseIdName(job.Renter);
             AvatarUrl = job.Renter == null ? null : job.Renter.AvatarUrl;
             BidCount = job.OfferHistories.Count();
+            Price = job.Price;
         }
         public int Id { get; set; }
         public string Name { get; set; }
@@ -34,6 +35,7 @@ namespace Api.Enities
         public string Status{ get; set; }
         public string AvatarUrl { get; set; }
         public int BidCount { get; set; }
+        public int Price { get; set; }
         public ResponseIdName Specialty { get; set; }
         public ResponseIdName Freelancer { get; set; }
         public ResponseIdName Renter { get; set; }

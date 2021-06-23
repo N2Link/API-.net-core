@@ -89,6 +89,28 @@ namespace Api.Controllers
             };
             return dashBoard;
         }
+        [HttpGet("accounts")]
+        public async Task<ActionResult<IEnumerable<AccountForListResponse>>> GetAllAccounts()
+        {
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var account = await _context.Accounts.SingleOrDefaultAsync(p => p.Email == email);
+            if (account == null && account.RoleId != 1) { return BadRequest(); }
+
+            return await _context.Accounts
+                .Include(p => p.Specialty)
+                .Include(p => p.RatingFreelancers)
+                .Include(p => p.Level)
+                .Select(p => new AccountForListResponse(p)).ToListAsync();
+        }
+
         [HttpGet("jobs")]
         public async Task<ActionResult<IEnumerable<JobForListResponse>>> getJobs()
         {
@@ -109,7 +131,7 @@ namespace Api.Controllers
                 .Select(p => new JobForListResponse(p)).ToListAsync();
         }
         //get job request
-        [HttpGet("jobrequest")]
+        [HttpGet("jobrequests")]
         public async Task<ActionResult<IEnumerable<JobForListResponse>>> getJobsRequest()
         {
             String jwt = Request.Headers["Authorization"];
@@ -134,8 +156,8 @@ namespace Api.Controllers
                                 .Select(p => new JobForListResponse(p)).ToListAsync();
         } 
         //get job request
-        [HttpGet("jobrequest/{id}")]
-        public async Task<ActionResult<IEnumerable<JobForListResponse>>> getJobsRequestById(int id)
+        [HttpGet("jobrequests/{id}")]
+        public async Task<ActionResult<IEnumerable<JobRequestDetail>>> getJobsRequestById(int id)
         {
             if (_context.Jobs.Find(id) == null)
             {
@@ -151,8 +173,7 @@ namespace Api.Controllers
             //I can get Claims using:
             var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
             var account = await _context.Accounts.SingleOrDefaultAsync(p => p.Email == email);
-            if (account == null) { return BadRequest(); }
-            if (account.RoleId != 1)
+            if (account == null || account.RoleId != 1)
             {
                 return BadRequest();
             }
@@ -160,10 +181,143 @@ namespace Api.Controllers
                                  .Include(p => p.S).ThenInclude(p => p.Specialty).AsSplitQuery()
                                  .Include(p=>p.Messages).ThenInclude(p=>p.Sender).AsSplitQuery()
                                  .Include(p=>p.Messages).ThenInclude(p=>p.Receive).AsSplitQuery()
-                                 .Where(p => p.Id == id 
-                                 &&(p.Status == "Request rework" || p.Status == "Request cancellation"))
+                                 .Where(p => p.Id == id)
                                 .OrderByDescending(p => p.CreateAt)
-                                .Select(p => new JobForListResponse(p)).ToListAsync();
+                                .Select(p => new JobRequestDetail(p)).ToListAsync();
+        }
+        //put rework .. admin
+        [HttpPut("jobs/{id}/rework")]
+        public async Task<ActionResult> Reworkjob(int id)
+        {
+            var job = _context.Jobs.Find(id);
+            if (job == null)
+            {
+                return NotFound();
+            }
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+
+            var renter = await _context.Accounts
+                .SingleOrDefaultAsync(p => p.Email == email);
+            if (job.RenterId != renter.Id)
+            {
+                return BadRequest(new { message = "You dont have this permission" });
+            }
+            if (job.Status != "Request rework")
+            {
+                return BadRequest();
+            }
+            job.Status = "In progress";
+
+            _context.Entry(job).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        //put cancel .. admin
+        [HttpPut("jobs/{id}/cancel")]
+        public async Task<ActionResult> CancelJob(int id)
+        {
+            var job = _context.Jobs.Find(id);
+            if (job == null)
+            {
+                return NotFound();
+            }
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+
+            var renter = await _context.Accounts
+                .SingleOrDefaultAsync(p => p.Email == email);
+            if (job.RenterId != renter.Id)
+            {
+                return BadRequest(new { message = "You dont have this permission" });
+            }
+            if (job.Status != "Request cancellation")
+            {
+                return BadRequest();
+            }
+            job.Status = "Cancellation";
+            job.FinishAt = TimeVN.Now();
+            _context.Entry(job).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpGet("services")]
+        public async Task<ActionResult<IEnumerable<ServiceResponse>>> GetServicesadmin()
+        {
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var admin = await _context.Accounts.SingleOrDefaultAsync(p => p.Email == email && p.RoleId == 1);
+            if (admin == null) { return BadRequest(); }
+            return await _context.Services
+                .Include(p => p.SpecialtyServices).ThenInclude(p => p.Specialty)
+                .Where(p => p.IsActive == true)
+                .Select(p => new ServiceResponse(p)).ToListAsync();
+        }
+
+        [HttpGet("skills")]
+        public async Task<ActionResult<IEnumerable<Skill>>> GetSkillsadmin()
+        {
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var admin = await _context.Accounts
+                .SingleOrDefaultAsync(p => p.Email == email && p.RoleId == 1);
+            if (admin == null) { return BadRequest(); }
+            return await _context.Skills
+                .Select(p => new Skill()
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    IsActive = p.IsActive
+                }).ToListAsync();
+        }
+
+        [HttpGet("specialties")]
+        public async Task<ActionResult<IEnumerable<Specialty>>> GetSpecialtiesadmin()
+        {
+            String jwt = Request.Headers["Authorization"];
+            jwt = jwt.Substring(7);
+            //Decode jwt and get payload
+            var stream = jwt;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(stream);
+            var tokenS = jsonToken as JwtSecurityToken;
+            //I can get Claims using:
+            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
+            var admin = await _context.Accounts.SingleOrDefaultAsync(p => p.Email == email && p.RoleId == 1);
+            if (admin == null) { return BadRequest(); }
+            return await _context.Specialties
+                .Include(p => p.SpecialtyServices)
+                .ThenInclude(p => p.Service).ToListAsync();
         }
     }
 }

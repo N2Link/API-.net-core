@@ -36,29 +36,7 @@ namespace Api.Controllers
                 .Where(p => p.IsActive == true)
                 .Select(p => new ResponseIdName(p)).ToListAsync();
         }
-        [HttpGet("adminmode")]
-        public async Task<ActionResult<IEnumerable<Skill>>> GetSkillsadmin()
-        {
-            String jwt = Request.Headers["Authorization"];
-            jwt = jwt.Substring(7);
-            //Decode jwt and get payload
-            var stream = jwt;
-            var handler = new JwtSecurityTokenHandler();
-            var jsonToken = handler.ReadToken(stream);
-            var tokenS = jsonToken as JwtSecurityToken;
-            //I can get Claims using:
-            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
-            var admin = await _context.Accounts
-                .SingleOrDefaultAsync(p => p.Email == email && p.RoleId == 1);
-            if (admin == null) { return BadRequest(); }
-            return await _context.Skills
-                .Select(p => new Skill()
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    IsActive = p.IsActive
-                }).ToListAsync();
-        }
+        
         // GET: api/Services/5
         [HttpGet("{id}")]
         public async Task<ActionResult<ResponseIdName>> GetSkill(int id)

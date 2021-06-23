@@ -529,13 +529,14 @@ namespace Api.Hubs
 
         }
 
-        public async Task Notification (int id, string msg)
+        public static async Task Notification (int id, string msg)
         {
             if (ChatUsers.ContainsKey(id))
             {
                 foreach (var item in ChatUsers[id])
                 {
-                    await Clients.Client(item).SendAsync("Notification", msg);
+                    var context = GlobalHost.ConnectionManager.GetHubContext<MyHub>();
+                    context.Clients.All.addMessage(message);
                 }
             }
         }

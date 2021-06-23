@@ -42,25 +42,7 @@ namespace Api.Controllers
                 .Select(p => new SpecialtyResponse(p))
                 .ToListAsync();
         }
-
-        [HttpGet("adminmode")]
-        public async Task<ActionResult<IEnumerable<Specialty>>> GetSpecialtiesadmin()
-        {
-            String jwt = Request.Headers["Authorization"];
-            jwt = jwt.Substring(7);
-            //Decode jwt and get payload
-            var stream = jwt;
-            var handler = new JwtSecurityTokenHandler();
-            var jsonToken = handler.ReadToken(stream);
-            var tokenS = jsonToken as JwtSecurityToken;
-            //I can get Claims using:
-            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
-            var admin = await _context.Accounts.SingleOrDefaultAsync(p => p.Email == email && p.RoleId == 1);
-            if (admin == null) { return BadRequest(); }
-            return await _context.Specialties
-                .Include(p=>p.SpecialtyServices)
-                .ThenInclude(p=>p.Service).ToListAsync();
-        }
+        
         //GET Specialtys
         [HttpGet("{id}/services")]
         public async Task<ActionResult<List<ResponseIdName>>> GetSpecialyu(int id)

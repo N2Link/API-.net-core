@@ -51,15 +51,6 @@ namespace Api.Controllers
                 .Where(p=>p.BannedAtDate==null && p.Id!= account.Id)
                 .Select(p => new AccountForListResponse(p)).ToListAsync();
         }  
-        [HttpGet("adminmode")]
-        public async Task<ActionResult<IEnumerable<AccountForListResponse>>> GetAllAccounts()
-        {
-            return await _context.Accounts
-                .Include(p => p.Specialty)
-                .Include(p => p.RatingFreelancers)
-                .Include(p => p.Level)
-                .Select(p => new AccountForListResponse(p)).ToListAsync();
-        }
         [HttpGet("search")]
         public async Task<ActionResult<IEnumerable<AccountForListResponse>>> 
             GetListSearch(string search, int specialtyId, int serviceId,
