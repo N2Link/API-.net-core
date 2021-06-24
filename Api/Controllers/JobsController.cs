@@ -47,7 +47,7 @@ namespace Api.Controllers
                     .Include(p => p.S).ThenInclude(p => p.Specialty).AsSplitQuery()
                 .OrderByDescending(p => p.CreateAt)
                 .Where(p=>p.RenterId!= account.Id && p.Status == "Waiting" 
-                && p.Deadline > TimeVN.Now())
+                && p.Deadline > TimeVN.Now() && p.IsPrivate == false)
                 .Select(p => new JobForListResponse(p)).ToListAsync();
         }   
 
@@ -83,7 +83,8 @@ namespace Api.Controllers
                 &&(provinceId == "00" || p.ProvinceId == provinceId)
                 && (formOfWorkId == 0|| p.FormId == formOfWorkId)
                 &&(typeOfWorkId== 0 || p.TypeId == typeOfWorkId)
-                &&p.Status=="Waiting"&&p.Deadline > TimeVN.Now())
+                &&p.Status=="Waiting"&&p.Deadline > TimeVN.Now()
+                &&p.IsPrivate == false)
                 .OrderByDescending(p=>p.CreateAt)
                 .Select(p=> new JobForListResponse(p))
                 .ToListAsync();

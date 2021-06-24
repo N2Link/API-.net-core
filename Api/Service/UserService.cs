@@ -78,6 +78,8 @@ namespace Api.Service
                 .AsSplitQuery()
                 .Include(p => p.Level)
                 .AsSplitQuery()
+                .Include(p => p.Province)
+                .AsSplitQuery()
                 .Include(p => p.OfferHistories)
                 .AsSplitQuery()
                 .Include(p => p.CapacityProfiles)
@@ -86,14 +88,14 @@ namespace Api.Service
             Account account = list.SingleOrDefault(p => p.Email == email );
             if (account == null)
             {
-                throw new AppException("Email doesn't exist");
+                throw new AppException("Email không tồn tại trong hệ thống");
             }
             if (account.BannedAtDate != null)
             {
-                throw new AppException("Your account was bannish");
+                throw new AppException("Tài khoản của bạn đã bị khóa");
             }
             if (!VerifyPasswordHash(password, account.PasswordHash, account.PasswordSalt))
-                throw new AppException("Password not correct");
+                throw new AppException("Mật khẩu không chính xác");
             IUserService.UserEntitis userEntitis = new IUserService.UserEntitis(account);
             userEntitis.createUserToken();
             return userEntitis;
@@ -107,20 +109,23 @@ namespace Api.Service
             }
             catch (FormatException)
             {
-                throw new AppException("Email not formatted correctly");
+                throw new AppException("Email không đúng chuẩn, vui lòng nhập lại");
             }
             var acc = context.Accounts.SingleOrDefault(p => p.Email == account.Email);
             if (acc != null)
             {
-                throw new AppException("Email already exist");
+                throw new AppException("Email này đã được sử dụng trong hệ thống");
             }
             byte[] passwordHash, passwordSalt;
             CreatePasswordHash(password, out passwordHash, out passwordSalt);
             account.PasswordHash = passwordHash;
             account.PasswordSalt = passwordSalt;
             account.Balance = 0;
+            account.IsAccuracy = true;
             account.OnReady = false;
+            account.CreatedAtDate = TimeVN.Now();
             context.Accounts.Add(account);
+
             context.SaveChanges();
             account = context.Accounts
                 .Include(p => p.Role).SingleOrDefault(p => p.Id == account.Id);

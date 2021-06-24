@@ -15,7 +15,7 @@ namespace Api.Enities
             Id = job.Id;
             Name = job.Name;
             Deadline = job.Deadline;
-            CreatAt = job.CreateAt;
+            CreateAt = job.CreateAt;
             Cellingprice = job.Cellingprice;
             Floorprice = job.Floorprice;
             Status = job.Status;
@@ -29,7 +29,7 @@ namespace Api.Enities
         public int Id { get; set; }
         public string Name { get; set; }
         public DateTime Deadline { get; set; }
-        public DateTime CreatAt { get; set; }
+        public DateTime CreateAt { get; set; }
         public int Floorprice { get; set; }
         public int Cellingprice { get; set; }
         public string Status{ get; set; }

@@ -136,17 +136,18 @@ namespace Api
 
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Swagger Movies Demo V1");
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Swagger");
             });
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
             });
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapHub<ChatHub>("/chatHub");
-            });
+            });   
         }
     }
 }

@@ -574,7 +574,9 @@ namespace Api.Models
 
                 entity.Property(e => e.Id).HasColumnName("ID");
 
-                entity.Property(e => e.Comment).HasMaxLength(500);
+                entity.Property(e => e.Comment)
+                    .IsRequired()
+                    .HasMaxLength(500);
 
                 entity.Property(e => e.FreelancerId).HasColumnName("FreelancerID");
 

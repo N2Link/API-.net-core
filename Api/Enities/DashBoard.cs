@@ -13,9 +13,9 @@ namespace Api.Enities
         public int TotalCancelled { get; set; }
 
         public int TotalUser { get; set; }
-        public int UserConfirmed { get; set; }
 
-        public List<TotalMonth> TotalMonths { get; set; }
+        public List<TotalJobMonth> TotalJobMonths { get; set; }
+        public List<TotalUserMonth> TotalUserMonths { get; set; }
 
 
     }

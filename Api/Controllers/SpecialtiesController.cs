@@ -37,7 +37,8 @@ namespace Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<SpecialtyResponse>>> GetSpecialties()
         {
-            return await _context.Specialties.Include(p=>p.SpecialtyServices).ThenInclude(p=>p.Service)
+            return await _context.Specialties.Include(p=>p.SpecialtyServices)
+                .ThenInclude(p=>p.Service)
                 .Where(p => p.IsActive == true)
                 .Select(p => new SpecialtyResponse(p))
                 .ToListAsync();
@@ -68,6 +69,7 @@ namespace Api.Controllers
         {
             var specialty = await _context.Specialties
                 .Include(p => p.SpecialtyServices).ThenInclude(p => p.Service)
+                .Where(p => p.IsActive == true)
                 .SingleOrDefaultAsync(p => p.Id == id);
 
             if (specialty == null)
@@ -75,7 +77,6 @@ namespace Api.Controllers
                 return NotFound();
             }
             specialty.Accounts = null;
-            specialty.SpecialtyServices = null;
             return new SpecialtyResponse(specialty);
         }
 
@@ -132,7 +133,7 @@ namespace Api.Controllers
                     item.IsActive = true;
                 }
             }
-            check = specialty.SpecialtyServices.Where(p => p.IsActive == true)
+            check = specialty.SpecialtyServices
                     .Select(p => p.ServiceId).ToList();
             //active new
             foreach (var item in specialtyPutModel.Services.ToList())
@@ -147,23 +148,7 @@ namespace Api.Controllers
                     });
                 }
             }
-            _context.Entry(specialtyPutModel).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!SpecialtyExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            await _context.SaveChangesAsync();
 
             return Ok();
         }

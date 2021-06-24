@@ -139,6 +139,7 @@ namespace Api.Controllers
                 Star = ratingPost.Star,
                 Comment = ratingPost.Comment,
             };
+
             _context.Ratings.Add(rating);
             await _context.SaveChangesAsync();
             job.RatingId = rating.Id;

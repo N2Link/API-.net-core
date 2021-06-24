@@ -48,7 +48,7 @@ namespace Api.Controllers
                 .Include(p => p.Specialty)
                 .Include(p => p.RatingFreelancers)
                 .Include(p => p.Level)
-                .Where(p=>p.BannedAtDate==null && p.Id!= account.Id)
+                .Where(p=>p.BannedAtDate==null && p.Id!= account.Id && p.OnReady == true)
                 .Select(p => new AccountForListResponse(p)).ToListAsync();
         }  
         [HttpGet("search")]
@@ -83,7 +83,8 @@ namespace Api.Controllers
                 ||p.FreelancerServices.Select(x=>x.Service)
                     .Where(x=>x.IsActive==true).Select(p=>p.Id)                
                     .ToList().Contains(serviceId))
-                && p.BannedAtDate == null && p.Id != account.Id)
+                && p.BannedAtDate == null && p.Id != account.Id
+                &&p.OnReady == true)
                 .Select(p=> new AccountForListResponse(p))
                 .ToListAsync();
             return list;
@@ -106,7 +107,7 @@ namespace Api.Controllers
                 .Include(p=>p.JobFreelancers).ThenInclude(p=>p.Renter)
                 .Include(p => p.JobFreelancers).ThenInclude(p => p.OfferHistories)
                 .Include(p=>p.JobFreelancers).ThenInclude(p=>p.S).ThenInclude(p=>p.Specialty).AsSplitQuery()
-                .SingleOrDefaultAsync(p => p.Id == id && p.Email == email);
+                .SingleOrDefaultAsync(p => p.Email == email);
             if (account == null)
             {
                 return NotFound();
@@ -130,7 +131,7 @@ namespace Api.Controllers
                 .Include(p=>p.JobFreelancers).ThenInclude(p=>p.Renter)
                 .Include(p => p.JobFreelancers).ThenInclude(p => p.OfferHistories)
                 .Include(p => p.JobFreelancers).ThenInclude(p => p.S).ThenInclude(p=>p.Specialty).AsSplitQuery()
-                .SingleOrDefaultAsync(p => p.Id == id && p.Email == email);
+                .SingleOrDefaultAsync(p => p.Email == email);
             if (account == null)
             {
                 return NotFound();
@@ -161,7 +162,7 @@ namespace Api.Controllers
                 .Include(p => p.JobFreelancers).ThenInclude(p => p.Renter)
                 .Include(p => p.JobFreelancers).ThenInclude(p => p.OfferHistories)
                 .Include(p => p.JobFreelancers).ThenInclude(p => p.S).ThenInclude(p => p.Specialty).AsSplitQuery()
-                .SingleOrDefaultAsync(p => p.Id == id && p.Email == email);
+                .SingleOrDefaultAsync(p => p.Email == email);
             if (account == null)
             {
                 return NotFound();
@@ -190,7 +191,7 @@ namespace Api.Controllers
                 .Include(p => p.JobRenters).ThenInclude(p => p.OfferHistories)
                 .Include(p => p.JobRenters).ThenInclude(p => p.S).ThenInclude(p => p.Specialty).AsSplitQuery()
 
-                .SingleOrDefaultAsync(p => p.Id == id && p.Email == email);
+                .SingleOrDefaultAsync(p =>  p.Email == email);
             if (account == null)
             {
                 return NotFound();
@@ -214,7 +215,7 @@ namespace Api.Controllers
                 .Include(p => p.JobRenters).ThenInclude(p => p.Freelancer)
                 .Include(p => p.JobRenters).ThenInclude(p => p.OfferHistories)
                 .Include(p => p.JobRenters).ThenInclude(p => p.S).ThenInclude(p => p.Specialty).AsSplitQuery()
-                .SingleOrDefaultAsync(p => p.Id == id && p.Email == email);
+                .SingleOrDefaultAsync(p => p.Email == email);
             if (account == null)
             {
                 return NotFound();
@@ -240,7 +241,7 @@ namespace Api.Controllers
                 .Include(p => p.JobRenters).ThenInclude(p => p.Freelancer)
                 .Include(p => p.JobRenters).ThenInclude(p => p.OfferHistories)
                 .Include(p => p.JobRenters).ThenInclude(p => p.S).ThenInclude(p => p.Specialty).AsSplitQuery()
-                .SingleOrDefaultAsync(p => p.Id == id && p.Email == email);
+                .SingleOrDefaultAsync(p => p.Email == email);
             if (account == null)
             {
                 return NotFound();
@@ -266,7 +267,8 @@ namespace Api.Controllers
                 .Include(p => p.JobRenters).ThenInclude(p => p.Freelancer)
                 .Include(p => p.JobRenters).ThenInclude(p => p.OfferHistories)
                 .Include(p => p.JobRenters).ThenInclude(p => p.S).ThenInclude(p => p.Specialty).AsSplitQuery()
-                .SingleOrDefaultAsync(p => p.Id == id && p.Email == email);
+                .SingleOrDefaultAsync(p => p.Email == email);
+
             if (account == null)
             {
                 return NotFound();
@@ -280,24 +282,16 @@ namespace Api.Controllers
         [HttpGet("{id}/ratings")]
         public async Task<ActionResult<IEnumerable<RatingResponse>>> GetRatingsfreelancer(int id)
         {
-            String jwt = Request.Headers["Authorization"];
-            jwt = jwt.Substring(7);
-            //Decode jwt and get payload
-            var stream = jwt;
-            var handler = new JwtSecurityTokenHandler();
-            var jsonToken = handler.ReadToken(stream);
-            var tokenS = jsonToken as JwtSecurityToken;
-            //I can get Claims using:
-            var email = tokenS.Claims.First(claim => claim.Type == "email").Value;
-
-            var account = await _context.Accounts
-                .Include(p=>p.RatingFreelancers).ThenInclude(p=>p.Renter)
-                .Include(p=>p.RatingFreelancers).ThenInclude(p=>p.Jobs)
-                .SingleOrDefaultAsync(p => p.Email == email);
-
-            if (account == null) { return NotFound(); }
-            return account.RatingFreelancers
-                .Select(p => new RatingResponse(p)).ToList();
+            if (_context.Accounts.Find(id) == null)
+            {
+                return BadRequest();
+            }
+            return await _context.Ratings
+                .Include(p=>p.Freelancer)
+                .Include(p=>p.Renter)
+                .Include(p=>p.Jobs)
+                .Where(p=>p.FreelancerId == id)
+                .Select(p=> new RatingResponse(p)).ToListAsync();
         }
         //get skill
         [HttpGet("{id}/skills")]
@@ -639,7 +633,7 @@ namespace Api.Controllers
             account.BannedAtDate = TimeVN.Now();
             //_context.Accounts.Remove(account);
             await _context.SaveChangesAsync();
-            return account;
+            return Ok();
         }
 
         private bool AccountExists(int id)

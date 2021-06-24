@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 
 namespace Api.Enities
 {
-    public class TotalMonth
+    public class TotalJobMonth
+
     {
         public string Month { get; set; }
         public int NewJob { get; set; }
@@ -13,5 +14,6 @@ namespace Api.Enities
         public int Done { get; set; }
         public int Cancelled { get; set; }
         public int Money { get; set; }
+        public int UserCount { get; set; }
     }
 }

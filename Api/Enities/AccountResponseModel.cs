@@ -52,7 +52,7 @@ namespace Api.Enities
             }
             catch (Exception) { }
 
-            Province = account.ProvinceId!=null?account.Province:null;
+            Province = account.ProvinceId!=null? new ProvinceResponse(account.Province) :null;
             this.TotalRatingModel = new TotalRatingModel(account.RatingFreelancers.ToList());
 
             if (!isPrivate)
@@ -88,7 +88,7 @@ namespace Api.Enities
         public virtual ResponseIdName Specialty { get; set; }
         public TotalRatingModel TotalRatingModel { get; set; }
         public virtual List<BankAccount> BankAccounts { get; set; }
-        public Province Province { get; set; }
+        public ProvinceResponse Province { get; set; }
         public virtual ICollection<ResponseIdName> FreelancerServices { get; set; }
         public virtual ICollection<ResponseIdName> FreelancerSkills { get; set; }
         public virtual ICollection<CapacityProfileResponse> CapacityProfiles { get; set; }

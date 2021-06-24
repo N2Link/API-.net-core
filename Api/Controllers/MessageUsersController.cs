@@ -71,11 +71,14 @@ namespace Api.Controllers
                     LastMsgStatus = last.Status,
                     Time = last.Time,
                     UnseenCount = count,
+                    Type = last.Type,
+                    Confirmation = last.Confirmation                    
                 };
 
                 if(last.Job.Status == "Waiting")
                 {
                     messageUserResponse.Status = "In discussion";
+
                 }else if(last.Job.Status == "Cancellation" || last.Job.Status == "Closed" 
                     || last.Job.FreelancerId != last.FreelancerId)
                 {
@@ -117,6 +120,7 @@ namespace Api.Controllers
             {
                 return BadRequest();
             }
+
             if (job.Status == "Waiting" )
             {
                 foreach (var item in _context.Messages.Where(p => p.JobId == jobId && p.FreelancerId == freelancerId).ToList())
@@ -153,14 +157,17 @@ namespace Api.Controllers
             {
                 return BadRequest();
             }
-            var check = _context.Messages.First(p => p.JobId == jobId && p.FreelancerId == freelancerId 
-                                         && p.Type == "FinishRequest" && p.Confirmation == null);
-            if(check == null)
-            {
-                return Ok(new { canRequest = true, message = "Bạn có thể yêu cầu kết thúc công việc" });
-            }
-            return Ok(new { canRequest = false, message = "Bạn không không thể gửi thêm yêu cầu kết thúc công việc" });
+            var list = await _context.Messages.Where(p => p.JobId == jobId && p.FreelancerId == freelancerId
+                              && p.Type == "FinishRequest").ToListAsync();
 
+            foreach (var item in list)
+            {
+                if(item.Confirmation != "In progress")
+                {
+                    return Ok(new { canRequest = false, message = "Bạn không không thể gửi thêm yêu cầu kết thúc công việc" });
+                }
+            }
+            return Ok(new { canRequest = true, message = "Bạn có thể yêu cầu kết thúc công việc" });
         }
     }
 }

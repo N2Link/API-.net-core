@@ -138,28 +138,48 @@ namespace Api.Hubs
         //Undo
         public async Task Undo(int jobId, int freelancerId, int msgId)
         {
-            var msg = _context.Messages.Find(msgId);
-            if(msg==null || msg.JobId != jobId || msg.FreelancerId != freelancerId 
-                || msg.Type == "Text" || (msg.Type!="Text" && msg.Confirmation !=null))
+            var job = _context.Jobs.Find(jobId);
+            if (job == null)
+            {
+                return;
+            };
+            var renter = _context.Accounts.Find(job.RenterId);
+            if(renter == null)
             {
                 return;
             }
-            msg.Confirmation = "Undo";
-            await _context.SaveChangesAsync();
-
-            if (ChatUsers.ContainsKey(msg.ReceiveId))
+            var freelancer = _context.Accounts.Find(freelancerId);
+            if (freelancer == null)
             {
-                foreach (var item in ChatUsers[msg.ReceiveId])
-                {
-                    await Clients.Client(item).SendAsync("Undo_Form", jobId, freelancerId, msgId);
-                }
+                return;
             }
 
+            var msg = _context.Messages
+                .Where(p => p.Type == "SuggestedPrice" && p.JobId == jobId 
+                &&p.FreelancerId == freelancerId).ToList();
+            if(msg.Count() == 0 || msg.Last().Confirmation != null)
+            {
+                return;
+            }
+
+            renter.Balance += job.Price;
+            msg.Last().Confirmation = "Undo";
+            job.Price = 0;
+
+            await _context.SaveChangesAsync();
+
+            if (ChatUsers.ContainsKey(msg.Last().ReceiveId))
+            {
+                foreach (var item in ChatUsers[msg.Last().ReceiveId])
+                {
+                    await Clients.Client(item).SendAsync("Undo_Form", jobId, freelancerId, msg);
+                }
+            }
         }
+
         //Renter gửi đề nghị số tiền sẽ trả cho freelancer
         public async Task SuggestedPrice(int jobId, int freelancerId, int money)
         {
-            Console.WriteLine(jobId.ToString() + "\t" + freelancerId.ToString() + "\t" + money.ToString());
 
             var job = _context.Jobs.Find(jobId);
             if (job == null || job.Status != "Waiting")
@@ -169,6 +189,13 @@ namespace Api.Hubs
 
             var freelancer = _context.Accounts.Find(freelancerId);
             if(freelancer == null)
+            {
+                return;
+            }     
+            
+            var renter = _context.Accounts.Find(job.RenterId);
+
+            if(renter == null || renter.Balance < money)
             {
                 return;
             }
@@ -184,6 +211,9 @@ namespace Api.Hubs
                 Time = TimeVN.Now(),
                 Type = "SuggestedPrice"
             };
+            
+            job.Price += money;
+            renter.Balance -= money;
 
             _context.Messages.Add(msg);
             await _context.SaveChangesAsync();
@@ -220,6 +250,7 @@ namespace Api.Hubs
             {
                 return;
             }
+
             var freelancer = _context.Accounts.Find(freelancerId);
             if (freelancer == null)
             {
@@ -229,21 +260,23 @@ namespace Api.Hubs
             var msg = _context.Messages.Find(msgId);
             if(msg == null||msg.Type != "SuggestedPrice") { return; }
             int money = Int32.Parse(msg.Message1);
-            if (renter == null || renter.Balance < money)
+
+            if (renter == null)
             {
                 return;
             }
+
             if (confirm)
             {
-                job.Price += money;
                 job.Status = "In progress";
                 job.FreelancerId = freelancerId;
                 job.StartAt = TimeVN.Now();
-                renter.Balance -= money;
                 msg.Confirmation = "Accept";
             }
             else
             {
+                renter.Balance += job.Price;
+                job.Price = 0;
                 msg.Confirmation = "Decline";
             }
             await _context.SaveChangesAsync();
@@ -480,32 +513,34 @@ namespace Api.Hubs
             int freelancerId = Int32.Parse(job.FreelancerId.ToString());
 
             job.Status = status;
+
             if(status == "Cancellation")
             {
                 renter.Balance += job.Price;
                 job.FinishAt = TimeVN.Now();
             }
 
+            var msgEd = _context.Messages.Where(p => p.JobId == jobId
+            && p.FreelancerId == freelancerId && p.Type == "FinishRequest").ToList().Last();
 
-            Message msgToFreelancer = new Message()
+            msgEd.Confirmation = status;
+
+
+            Message msgToRenter = new Message()
             {
                 JobId = job.Id,
                 FreelancerId = freelancerId,
                 Message1 = message,
                 SenderId = adminId,
-                ReceiveId = freelancerId,
-                Status = "Seen",
+                ReceiveId = job.RenterId,
+                Status = "Unseen",
+                Confirmation = status,
                 Type = "Notification",
                 Time = TimeVN.Now(),
             };
-
-            Message msgToRenter = msgToFreelancer;
-            msgToRenter.ReceiveId = renter.Id;
-
             //đây là message của admin cho quyết định của mình, load db check thấy senderId == receiveId 
             //thì để nó là một dòng note trên màn hình
 
-            _context.Messages.Add(msgToFreelancer);
             _context.Messages.Add(msgToRenter);
             await _context.SaveChangesAsync();
 
@@ -514,7 +549,7 @@ namespace Api.Hubs
             {
                 foreach (var contextId in ChatUsers[freelancerId])
                 {
-                    await Clients.Client(contextId).SendAsync("ConfirmRequest", new MessageResponse(msgToFreelancer));
+                    await Clients.Client(contextId).SendAsync("ConfirmRequest", new MessageResponse(msgToRenter));
                 }
             }
 
@@ -528,18 +563,5 @@ namespace Api.Hubs
 
 
         }
-
-        public static async Task Notification (int id, string msg)
-        {
-            if (ChatUsers.ContainsKey(id))
-            {
-                foreach (var item in ChatUsers[id])
-                {
-                    var context = GlobalHost.ConnectionManager.GetHubContext<MyHub>();
-                    context.Clients.All.addMessage(message);
-                }
-            }
-        }
-
     }
 }

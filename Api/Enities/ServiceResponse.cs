@@ -11,7 +11,9 @@ namespace Api.Enities
         {
             this.Id = service.Id;
             this.Name = service.Name;
-            this.Specialty = service.SpecialtyServices.Select(p => new ResponseIdName(p.Specialty)).ToList();
+            this.Specialty = service.SpecialtyServices
+                .Where(p=>p.IsActive == true && p.Specialty.IsActive == true)
+                .Select(p => new ResponseIdName(p.Specialty)).ToList();
         }
         public int Id { get; set; }
         public string Name { get; set; }

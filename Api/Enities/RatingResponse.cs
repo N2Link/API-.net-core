@@ -19,7 +19,7 @@ namespace Api.Enities
             AvatarRenter = rating.Renter.AvatarUrl;
             try
             {
-                Job = new ResponseIdName(rating.Jobs.SingleOrDefault(p=>p.Id == rating.Id));
+                Job = new ResponseIdName(rating.Jobs.SingleOrDefault(p=>p.RatingId == rating.Id));
             }
             catch{}
         }

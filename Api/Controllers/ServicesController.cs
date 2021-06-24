@@ -57,16 +57,18 @@ namespace Api.Controllers
         }
         // GET: api/Services/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<ResponseIdName>> GetService(int id)
+        public async Task<ActionResult<ServiceResponse>> GetService(int id)
         {
-            var service = await _context.Services.FindAsync(id);
+            var service = _context.Services
+                                .Include(p => p.SpecialtyServices).ThenInclude(p => p.Specialty)
+                                .SingleOrDefault(p=>p.Id == id);
 
             if (service == null)
             {
                 return NotFound();
             }
 
-            return new ResponseIdName(service);
+            return new ServiceResponse(service);
         }
 
         // PUT: api/Services/5
@@ -134,7 +136,7 @@ namespace Api.Controllers
             }
 
             return Ok();
-        }
+        }   
 
         // POST: api/Services
         // To protect from overposting attacks, enable the specific properties you want to bind to, for

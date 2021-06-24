@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Api.Helpers;
-using Api.Models;
 using Microsoft.AspNetCore.Cors;
 
 namespace Api.Controllers
@@ -23,10 +22,8 @@ namespace Api.Controllers
     public class RegisterController : ControllerBase
     {
         IUserService userService;
-        IWebHostEnvironment _webHostEnvironment;
-        public RegisterController(IWebHostEnvironment webHostEnvironment, IUserService  userService)
+        public RegisterController( IUserService  userService)
         {
-            _webHostEnvironment = webHostEnvironment;
             this.userService = userService ;
         }
         [AllowAnonymous]
@@ -37,8 +34,7 @@ namespace Api.Controllers
             account.Name = model.Name;
             account.Phone = model.Phone;
             account.Email = model.Email;
-            account.RoleId = model.RoleID;
-            //string path = _webHostEnvironment.WebRootPath + "\\Avatars\\default.jpg";
+            account.RoleId = 2;
             account.AvatarUrl = "freelancervn.somee.com/api/images/avatars/default.jpg";
             try
             {

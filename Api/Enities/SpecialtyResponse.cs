@@ -13,8 +13,9 @@ namespace Api.Enities
             this.Id = specialty.Id;
             this.Name = specialty.Name;
             this.Image = specialty.Image;
+
             this.Services = specialty.SpecialtyServices
-                .Where(p=>p.IsActive = true && p.Service.IsActive ==true)
+                .Where(p=>p.IsActive == true && p.Service.IsActive ==true)
                 .Select(p => new ResponseIdName(p.Service)).ToList();
         }
 
